@@ -8,7 +8,7 @@ Follow these steps below.
 
 1. Clone the eCTF repository using ssh or https 
 ```bash
-git clone git@github.com:CactiLab/2022-ectf-insecure-example.git --recursive
+git clone git@github.com:CactiLab/2022-ectf-UB-Cacti-design.git --recursive
 ``` 
 
 2. Change the current origin remote to another name
