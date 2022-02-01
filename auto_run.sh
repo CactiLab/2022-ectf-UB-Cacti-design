@@ -83,3 +83,6 @@ python3 tools/run_saffire.py monitor --emulated \
     --sysname $SYS_NAME \
     --uart-sock $UART_SOCK \
     --boot-msg-file boot.txt
+
+# 7. Shutting Down the Bootloader
+python3 tools/run_saffire.py kill-system --emulated --sysname $SYS_NAME
