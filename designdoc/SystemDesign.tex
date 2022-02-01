@@ -1,0 +1,136 @@
+%==============================================================================
+\documentclass[11pt,oneside,onecolumn,letterpaper]{article}
+\usepackage{times}
+\usepackage[paperwidth=8.5in, paperheight=11in,
+top=2.5cm, bottom=2.6cm, left=2.58cm, right=2.53cm]{geometry}
+%\setlength{\textheight} {9.00in}
+%\setlength{\textwidth}  {6.40in}
+%\setlength{\topmargin}  {-0.50in}
+%%\setlength{\headheight} {0.00in}
+%%\setlength{\headsep}     {0.40in}
+%\setlength{\oddsidemargin}{-0.010in}
+%\setlength{\evensidemargin}{-0.00in}
+%==============================================================================
+%\usepackage{algorithm}
+\usepackage{amssymb}
+\usepackage{color}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{latexsym}
+\usepackage{subfigure}
+\usepackage{wrapfig}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[hyphens]{url}
+\usepackage{pifont}
+\usepackage{color}
+\usepackage{colortbl}
+\usepackage[lined, boxed, linesnumbered]{algorithm2e}
+\usepackage[square, comma, sort&compress, numbers]{natbib}
+
+\newcounter{alg}
+\newenvironment{enum-ref}{
+\begin{list}%
+{[\arabic{alg}]} {\usecounter{alg}
+  \setlength{\leftmargin} {0.25in}
+  \setlength{\labelwidth} {0.30in}
+  \setlength{\rightmargin}{0.00in}
+  \setlength{\topsep}     {0.00in}}
+}{\end{list}}
+
+\newenvironment{enum-number}{
+\begin{list}%
+{\arabic{alg})} {\usecounter{alg}
+  \setlength{\leftmargin} {0.25in}
+  \setlength{\labelwidth} {0.30in}
+  \setlength{\rightmargin}{0.00in}
+  \setlength{\topsep}     {0.00in}}
+}{\end{list}}
+
+\newenvironment{enum-nonum}{
+\begin{list}%
+{$\bullet$} {
+  \setlength{\leftmargin} {0.25in}
+  \setlength{\labelwidth} {0.30in}
+  \setlength{\rightmargin}{0.00in}
+  \setlength{\topsep}     {0.00in}}
+}{\end{list}}
+
+\let\chapter\section
+
+%==============================================================================
+\pagestyle{plain}
+%==============================================================================
+
+\title{Secure Avionics Flight Firmware Installation Routine System Design}
+\author{MITRE eCTF 2022\\Team \textbf{Cacti}\\ University at Buffalo}
+\date{}
+
+
+
+\begin{document}
+%%
+%=============================================================================
+\normalsize
+
+
+\maketitle
+%\date{}
+
+\renewcommand{\thepage}{System Design, Team Cacti, University at Buffalo--\arabic{page}}
+\setcounter{page}{1} \normalsize
+%
+%\renewcommand{\baselinestretch}{1.2}
+%\normalsize
+%\vspace{0.1in}
+%\centerline{\textbf{\Large }}
+%\renewcommand{\baselinestretch}{1.0}
+%\normalsize
+
+\newcommand{\flagRollback}{\textsf{Rollback}\xspace}
+
+\section{Introduction}
+
+This section presents the entities and communication channels in the system.
+
+\subsection{Entities}
+
+The following summarizes the entities in the system.
+
+
+
+\subsection{Communication Channels}
+
+
+\section{Attack Models}
+
+The attackers can carry out the following attacks:
+
+
+\section{Our Design}
+
+
+\subsection{points....}
+
+
+\subsection{Key Generation and Storage}
+
+
+
+  \subsection{Prevent Replay Attack}
+  
+\subsection{Build Process}
+
+  Describe the important changes in build process.
+
+\section{Implementation}
+\subsection{Critical Functions and Files}
+
+
+% \section{Flag Protection}
+
+% \subsection{\textsf{D}}
+
+
+\end{document}
+%==============================================================================

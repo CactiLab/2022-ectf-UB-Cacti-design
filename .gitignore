@@ -8,7 +8,9 @@ socks
 *.sock
 
 *.deleteme
-
+*.aux
+*.gz
+*.log
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,c,c++,git,pycharm
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,c,c++,git,pycharm
