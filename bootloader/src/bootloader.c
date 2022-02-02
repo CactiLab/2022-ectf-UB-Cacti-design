@@ -67,8 +67,7 @@
 /*While generating secrets genereate 64 bytes of garbage that will be on block 0, put the secrect starting from location 64*/
 void eeprom_data_handling()
 {
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
-    uint8_t inItRet = EEPROMInit();
+    
     uint8_t eeprom_read[EEPROM_BLOCK_SIZE];
     //uint32_t eeprom_size = EEPROMSizeGet();
     //uint32_t block_count =  EEPROMBlockCountGet();
@@ -86,7 +85,6 @@ void eeprom_data_handling()
 }
 void handle_boot(void)
 {    
-    eeprom_data_handling();
     uint32_t size;
     uint32_t i = 0;
     uint8_t *rel_msg;
@@ -197,6 +195,7 @@ void load_data(uint32_t interface, uint32_t dst, uint32_t size)
  */
 void handle_update(void)
 {
+    //eeprom_data_handling();
     // metadata
     uint32_t current_version;
     uint32_t version = 0;
@@ -337,6 +336,8 @@ int main(void) {
 
     // Initialize IO components
     uart_init();
+    // SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
+    // uint8_t inItRet = EEPROMInit();
     // Handle host commands
     while (1) {
         cmd = uart_readb(HOST_UART);
