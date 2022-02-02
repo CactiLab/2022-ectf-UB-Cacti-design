@@ -9,7 +9,6 @@
 # 2022 MITRE eCTF competition, and may not meet MITRE standards for quality.
 # Use this code at your own risk!
 #
-# DO NOT MODIFY THIS FILE
 
 FROM ubuntu:focal
 
@@ -33,7 +32,7 @@ ADD bootloader /bl_build
 RUN /host_tools/generate_secrets
 
 # Create EEPROM contents
-RUN echo "Bootloader Data" > /bootloader/eeprom.bin
+RUN echo "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBC" > /bootloader/eeprom.bin
 
 # Compile bootloader
 WORKDIR /bl_build

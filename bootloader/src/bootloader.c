@@ -16,6 +16,7 @@
 
 #include "driverlib/interrupt.h"
 #include "driverlib/sysctl.h"
+#include "driverlib/eeprom.h"
 #include "flash.h"
 #include "uart.h"
 
@@ -51,8 +52,9 @@
 
 #define CONFIGURATION_STORAGE_PTR  ((uint32_t)(CONFIGURATION_METADATA_PTR + FLASH_PAGE_SIZE))
 
-
-
+#define BOOTLOADER_SECRET_DATA_PTR 0x40 /*We cannot start from zero as block 0 cannot be hidden. */
+#define EEPROM_SECRET_BLOCK_START 0x1
+#define EEPROM_BLOCK_SIZE 64
 
 // Firmware update constants
 #define FRAME_OK 0x00
@@ -62,16 +64,20 @@
 /**
  * @brief Boot the firmware.
  */
+/*While generating secrets genereate 64 bytes of garbage that will be on block 0, put the secrect starting from location 64*/
 void eeprom_data_handling()
 {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
     uint8_t inItRet = EEPROMInit();
-    uint8_t eeprom_read[16];
-    uint32_t eeprom_size = EEPROMSizeGet();
-    uint32_t block_count =  EEPROMBlockCountGet();
-    //memset(eeprom_read, 0xf, sizeof(eeprom_read));
-    //EEPROMProgram(eeprom_read, 0x0, sizeof(eeprom_read));
-    EEPROMRead(eeprom_read, 0x0, sizeof(eeprom_read)); /*EEPROM block hiding*/
+    uint8_t eeprom_read[EEPROM_BLOCK_SIZE];
+    //uint32_t eeprom_size = EEPROMSizeGet();
+    //uint32_t block_count =  EEPROMBlockCountGet();
+
+    EEPROMRead(eeprom_read, 0x0, sizeof(eeprom_read)); /*EEPROM block hiding first block does not work*/
+    EEPROMRead(eeprom_read, BOOTLOADER_SECRET_DATA_PTR, sizeof(eeprom_read)); /*EEPROM block hiding*/
+    memset(eeprom_read, 0, sizeof(eeprom_read));
+    EEPROMBlockHide(EEPROM_SECRET_BLOCK_START);
+    EEPROMRead(eeprom_read, BOOTLOADER_SECRET_DATA_PTR, sizeof(eeprom_read)); /*EEPROM block hiding*/
     uint32_t protec_ret;
     for (uint32_t i = 0; i < 32; i++)
     {
