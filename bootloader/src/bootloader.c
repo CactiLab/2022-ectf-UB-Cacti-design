@@ -15,7 +15,7 @@
 #include <stdbool.h>
 
 #include "driverlib/interrupt.h"
-
+#include "driverlib/sysctl.h"
 #include "flash.h"
 #include "uart.h"
 
@@ -62,8 +62,25 @@
 /**
  * @brief Boot the firmware.
  */
-void handle_boot(void)
+void eeprom_data_handling()
 {
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
+    uint8_t inItRet = EEPROMInit();
+    uint8_t eeprom_read[16];
+    uint32_t eeprom_size = EEPROMSizeGet();
+    uint32_t block_count =  EEPROMBlockCountGet();
+    //memset(eeprom_read, 0xf, sizeof(eeprom_read));
+    //EEPROMProgram(eeprom_read, 0x0, sizeof(eeprom_read));
+    EEPROMRead(eeprom_read, 0x0, sizeof(eeprom_read)); /*EEPROM block hiding*/
+    uint32_t protec_ret;
+    for (uint32_t i = 0; i < 32; i++)
+    {
+        protec_ret = EEPROMBlockProtectGet(i);
+    }
+}
+void handle_boot(void)
+{    
+    eeprom_data_handling();
     uint32_t size;
     uint32_t i = 0;
     uint8_t *rel_msg;
@@ -314,7 +331,6 @@ int main(void) {
 
     // Initialize IO components
     uart_init();
-
     // Handle host commands
     while (1) {
         cmd = uart_readb(HOST_UART);
