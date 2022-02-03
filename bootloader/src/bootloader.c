@@ -195,7 +195,7 @@ void load_data(uint32_t interface, uint32_t dst, uint32_t size)
  */
 void handle_update(void)
 {
-    //eeprom_data_handling();
+    eeprom_data_handling();
     // metadata
     uint32_t current_version;
     uint32_t version = 0;
@@ -336,8 +336,8 @@ int main(void) {
 
     // Initialize IO components
     uart_init();
-    // SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
-    // uint8_t inItRet = EEPROMInit();
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
+    uint8_t inItRet = EEPROMInit();
     // Handle host commands
     while (1) {
         cmd = uart_readb(HOST_UART);
