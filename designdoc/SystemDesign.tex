@@ -113,11 +113,11 @@ The following summarizes the entities in the system.
 The attackers can carry out the following attacks:
 
 \begin{itemize}
-  \item Attackers may install custom or modified firmware and configurations, and compromise the flight.
+  \item Attackers may install custom or modified firmware and configurations to compromise the flight.
   \item Attackers may install old and buggy version of the firmware.
-  \item Attackers may access host secrets.
-  \item Side-channel attack.
-  \item Hardware trojan.
+  \item Attackers may read firmware and configuration via readback function.
+  \item Attackers may attain the password via side-channel attack.
+  \item Attackers may access sensitive data or disable hardware protection via hardware trojan installed on FLASH.
 \end{itemize}
 
 
@@ -128,7 +128,7 @@ The bootloader can access the associated public key $pk_k$ and three AES256-GCM 
 EEPROM also stores additional data or secrets that the bootloader needs at run-time.
 To protect the EEPROM we utilize EEPROM block hiding feature.
 
-MPU is configured to 1) prevent the EEPROM from being accessed by an invalid host; 2) set the FLASH as eXecute-Never (XN) except for the bootloader, 3) set the FLASH as read and write (RW) for the bootloader only. 
+MPU is configured to 1) set the FLASH as eXecute-Never (XN) except for the bootloader region, 2) set the FLASH as read and write (RW) for the bootloader only, 3) set the bootloader region as eXecute Only Memory (XOM). 
 
 ENC and DEC stand for symmetric encryption and decryption with AES256-GCM.
 AENC and ADEC stand for asymmetric encryption and decryption with RSA512.
