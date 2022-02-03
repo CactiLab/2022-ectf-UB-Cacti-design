@@ -366,3 +366,5 @@ cython_debug/
 #.idea/
 
 # End of https://www.toptal.com/developers/gitignore/api/python,c,c++,git,pycharm
+designdoc/SystemDesign.fdb_latexmk
+designdoc/SystemDesign.fls
