@@ -127,20 +127,26 @@ The attackers can carry out the following attacks:
 The host $H$ has its private key $sk_k$ stored in the host secrets file.
 The bootloader can access the associated public key $pk_k$ and two AES256-GCM keys for firmware ($k_f$) and configuration ($k_c$) protection, which are stored in the EEPROM.
 EEPROM also stores additional data or secrets that the bootloader needs at run-time.
+To protect the EEPROM we utilize EEPROM block hiding feature.
+
 MPU is configured to 1) prevent the EEPROM from being accessed by an invalid host; 2) set the FLASH as eXecute-Never (XN) except for the bootloader, 3) set the FLASH as read and write (RW) for the bootloader only. 
 
 ENC and DEC stand for symmetric encryption and decryption with AES256-GCM.
 AENC and ADEC stand for asymmetric encryption and decryption with RSA512.
 SIG and AUTH stand for the signature and verification with RSA512.
 
-\subsection{Key Generation and Storage}
-Asymmetric crypto is for readback functionality, the host generates a public key pair ($pk_k, sk_k$).
-The secret key $sk_k$ never leaves the host, while the public key $pk_k$ is loaded on the devices as EEPROM data.
-
+\subsection{Key Protection}
+The asymmetric $pk_k$, symmetric $k_f$ and $k_c$ are kept in the EEPROM region memory for the bootloader to access at runtime.
+When the bootloader starts execution it configures the MPU, which allows only the bootloader to access the EEPROM key blocks.
+After that, it copies the keys from the EEPROM to the flash memory.
+Immediately, EEPROM blocks containing the keys are hidden using the EEPROM block hiding feature, which denies read/write access for everyone until reset.
+Thus, even if attackers can overwrite the MPU configurations, they can not access the EEPROM memory.
 \subsection{Firmware and Configuration Data Protection}
+Symmetric crypto is for firmware and configuration data protection, $k_f$ and ($k_c$).
 
 \subsection{Readback Host Authentication}
-
+Asymmetric crypto is for readback functionality, the host generates a public key pair ($pk_k, sk_k$).
+The secret key $sk_k$ never leaves the host, while the public key $pk_k$ is loaded on the devices as EEPROM data.
 We implement a digital signature mechanism to ensure that only the valid host can request a readback.
 \begin{itemize}
   \item[Step 1.] Initialize readback function. 
