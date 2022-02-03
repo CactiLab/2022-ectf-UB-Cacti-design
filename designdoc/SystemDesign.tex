@@ -124,7 +124,7 @@ The attackers can carry out the following attacks:
 \section{Our Design}
 
 The host $H$ has its private key $sk_k$ stored in the host secrets file.
-The bootloader can access the associated public key $pk_k$ and two AES256-GCM keys for firmware ($k_f$) and configuration ($k_c$) protection, which are stored in the EEPROM.
+The bootloader can access the associated public key $pk_k$ and three AES256-GCM keys for firmware ($k_f$), configuration ($k_c$), and version number ($k_v$) protection, which are stored in the EEPROM.
 EEPROM also stores additional data or secrets that the bootloader needs at run-time.
 To protect the EEPROM we utilize EEPROM block hiding feature.
 
@@ -141,29 +141,37 @@ After that, it copies the keys from the EEPROM to the flash memory.
 Immediately, EEPROM blocks containing the keys are hidden using the EEPROM block hiding feature, which denies read/write access for everyone until reset.
 Thus, even if attackers can overwrite the MPU configurations, they can not access the EEPROM memory.
 \subsection{Firmware and Configuration Data Protection}
-Symmetric crypto is for firmware and configuration data protection, $k_f$ and ($k_c$).
+Symmetric crypto is used for firmware, configuration data, version number protection, $k_f$, $k_c$, and $k_v$.
+Our developed host tools implement two layers of symmetric encryption, the outer layer is to protect the authenticity, integrity of the version number and the inner layer for the firmware body.
+We keep the firmware and configuration data in encrypted form in flash memory, whereas at firmware boot time we put the decrypted firmware in SRAM and decrypt the configuration data in flash.
+Figure~\ref{fig:frmt} demonstrates the format of protected images.
+\subsubsection{Host tools}
+Our host tools first encrypt the firmware binary and release message with encryption key $k_f$ and $IV$, to generate $C_{FW}$, $tag_f$ = ENC$_{k_f, iv}$(Firmware body + Release message).
+Then we encrypt the version number and $tag_f$ with key $k_v$ and IV to generate $C_V$, $tag_v$ = ENC$_{k_v, iv}$($\mathcal{V} + tag_f$).
+We put the firmware size, IV and $tag_v$ as a header in protected image.
 
-Case 2: Whenever the SED$_a$ sends a targeted message to SED$_b$, it first generates an AES key $k_a$ and IV $iv_a$. 
-Then, it uses AES-GCM to encrypt and authenticate the SCEWL header ($\mathcal{H}$) and body ($\mathcal{B}$), which outputs the ciphertext ($\mathcal{C}$) and tag ($\mathcal{T}$), e.g. $\mathcal{C}, \mathcal{T}$ = ENC$_{k_a, iv_a}(\mathcal{H} || \mathcal{B})$.
-Then, it encrypts $k_a$ with $pk_b$, e.g. $\mathcal{E}=$AENC$_{pk_b}(k_a)$.
-Then, it sends out $\mathcal{M}$ = $\mathcal{H} || \mathcal{E}||iv_a||\mathcal{T}||\mathcal{C}$ (Figure \ref{fig:msg}).
-A caveat here is to calculate body length before the AES operation.
+\subsubsection{Bootloader}
 
-Whenever SED$_b$ receives a targeted message $\mathcal{M}$, it first checks the $\mathcal{H}$ to see if the message is intended for it. If not, discard.
-Then, it uses its private key $sk_b$ to decryt the received ciphertext AES key $k_a$, e.g. $k_a$ = ADEC$_{sk_b}($AENC$_{pk_b}(k_a))$.
-Then, it uses $k_a, iv_a$ to decrypt and authenticate the message, e.g. $\mathcal{C'}, \mathcal{T'}$ = DEC$_{k_a, iv_a}(\mathcal{C})$.
-It compares $\mathcal{T'}$ and $\mathcal{T}$.
-If they do not match, discard.
-Otherwise, $\mathcal{C'}=\mathcal{H}||\mathcal{B}$.
+The boot loader decrypts the layer for firmware update and boot:
 
+Case 1: Whenever the boot loader gets the update firmware command, it uses the IV and the symmetric key $k_v$ to decrypt the version number, tag $tag_f$ ($\mathcal{V}, tag_f, tag'_v$ = DEC$_{k_v, iv}(C_V)$).
+Generated tag $tag'_v$ and header tag $tag_v$ is compared for integrity checking.
+Then it checks the version number with the previously installed one to make the decision if its valid version.
+If valid we store the encrypted firmware in flash memory.
+The Bootloader also stored the tag $tag_f$, $IV$ and firmware size to use at boot time.
+
+Case 2: At boot time the boot loader decrypts the firmware body and release message with key $k_f$ and $IV$ ($FW_{body}, Rel_{msg}, tag'_f$ = DEC$_{k_v, iv}(C_{FW})$).
+The tags $tag'_f$ and $tag_f$ are compared for integrity checking.
 
 \begin{figure}[!htbp]
 	\begin{centering}
 		\includegraphics[width = .80\textwidth]{pic/FW_CFG_FORMAT.pdf}
 		\caption{Protected Firmware and Configuration Format}
-		\label{fig:msg}
+		\label{fig:frmt}
 	\end{centering}
 \end{figure}
+
+The configuration data is handled the same way as the firmware with one layer of symmetric crypto with key $k_c$ and $IV_c$.
 
 \subsection{Readback Host Authentication}
 Asymmetric crypto is for readback functionality, the host generates a public key pair ($pk_k, sk_k$).
