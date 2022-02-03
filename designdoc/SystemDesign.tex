@@ -143,13 +143,13 @@ The secret key $sk_k$ never leaves the host, while the public key $pk_k$ is load
 
 We implement a digital signature mechanism to ensure that only the valid host can request a readback.
 \begin{itemize}
-  \item[Step 1.] Init readback function. 
+  \item[Step 1.] Initialize readback function. 
   The host (or attacker) sends the command \textbf{R} through UART to bootloader.
   Bootloader initiates readback and waits for the authentication message.  
   \item[Step 2.] Host sends authentication message.
   The host generates a digest ($\mathcal{P_H}$), which is a random plaintext ($\mathcal{P}$) hashed by SHA-256.
   Then it uses the private key $sk_k$ to encrypt the digest, $\mathcal{C}$ = ENC$_{sk_k}(\mathcal{P_H})$.
-  The signature $\mathcal{C}$ \& plaintext $\mathcal{P}$ will be sent through UART to the bootloader ($\mathcal{C}$, $\mathcal{P}$).
+  The ciphertext $\mathcal{C}$ \& plaintext $\mathcal{P}$ will be sent through UART to the bootloader ($\mathcal{C}$, $\mathcal{P}$).
   \item[Step 3.] Bootloader authenticates the host.
   The bootloader uses the associated public key $pk_k$ from EEPROM to decrypt the ciphertext and get the message digest $\mathcal{P_H}$ = DEC$_{pk_k}(\mathcal{C})$.
   Lastly, it generates a second messages digest $\mathcal{P'_H}$ directly from the received plaintext $\mathcal{P}$ and compares both digests $\mathcal{P'_H}$.
