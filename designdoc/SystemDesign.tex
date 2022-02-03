@@ -135,8 +135,8 @@ AENC and ADEC stand for asymmetric encryption and decryption with RSA512.
 SIG and AUTH stand for the signature and verification with RSA512.
 
 \subsection{Key Protection}
-The asymmetric $pk_k$, symmetric $k_f$ and $k_c$ are kept in the EEPROM region memory for the bootloader to access at runtime.
-When the bootloader starts execution it configures the MPU, which allows only the bootloader to access the EEPROM key blocks.
+The asymmetric $pk_k$, symmetric $k_f$, $k_c$, and $k_v$ are kept in the EEPROM region memory for the bootloader to access at runtime.
+When the bootloader starts execution it configures the MPU, which allows only the bootloader to access the EEPROM memory.
 After that, it copies the keys from the EEPROM to the flash memory.
 Immediately, EEPROM blocks containing the keys are hidden using the EEPROM block hiding feature, which denies read/write access for everyone until reset.
 Thus, even if attackers can overwrite the MPU configurations, they can not access the EEPROM memory.
@@ -151,8 +151,6 @@ Then we encrypt the version number and $tag_f$ with key $k_v$ and IV to generate
 We put the firmware size, IV and $tag_v$ as a header in protected image.
 
 \subsubsection{Bootloader}
-
-The bootloader decrypts the layer for firmware update and boot:
 
 \textbf{Update}: Whenever the bootloader gets the update firmware command, it uses the IV and the symmetric key $k_v$ to decrypt the version number, tag $tag_f$ ($\mathcal{V}, tag_f, tag'_v$ = DEC$_{k_v, iv}(C_V)$).
 Generated tag $tag'_v$ and header tag $tag_v$ is compared for integrity checking.
