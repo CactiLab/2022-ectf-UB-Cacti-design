@@ -127,7 +127,7 @@ The attackers can carry out the following attacks:
 Each host $H$ has its private key $sk_k$ stored in the host secrets file.
 The bootloader can access a list of valid hosts with the associated public key $pk_k$ and two AES256-GCM keys for firmware ($k_f$) and configuration ($k_c$) protection, which are stored in the EEPROM.
 EEPROM also stores additional data or secrets that the bootloader needs at run-time.
-MPU is configured to 1) prevent the EEPROM from being accessed by an invalid host; 2) set the FLASH as read-only except for the bootloader.
+MPU is configured to 1) prevent the EEPROM from being accessed by an invalid host; 2) set the FLASH as eXecute-Never (XN) except for the bootloader, 3) set the FLASH as read and write (RW) for the bootloader only. 
 
 ENC and DEC stand for symmetric encryption and decryption with AES256-GCM.
 AENC and ADEC stand for asymmetric encryption and decryption with RSA512.
