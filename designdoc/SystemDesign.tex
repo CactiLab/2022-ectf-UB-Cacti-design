@@ -152,7 +152,7 @@ We put the firmware size, IV and $tag_v$ as a header in protected image.
 
 \subsubsection{Bootloader}
 
-The boot loader decrypts the layer for firmware update and boot:
+The bootloader decrypts the layer for firmware update and boot:
 
 \textbf{Update}: Whenever the bootloader gets the update firmware command, it uses the IV and the symmetric key $k_v$ to decrypt the version number, tag $tag_f$ ($\mathcal{V}, tag_f, tag'_v$ = DEC$_{k_v, iv}(C_V)$).
 Generated tag $tag'_v$ and header tag $tag_v$ is compared for integrity checking.
@@ -190,6 +190,8 @@ We implement a digital signature mechanism to ensure that only the valid host ca
   Lastly, it generates a second messages digest $\mathcal{P'_H}$ directly from the received plaintext $\mathcal{P}$ and compares both digests $\mathcal{P'_H}$.
   If they do not match, discard.
   Otherwise: response the readback request.
+  
+  \item [Step 4.] Decrypt the requested memory of the firmware or configuration data and write response on the UART connection for the host.
 \end{itemize}
 
 \subsection{Prevent Version Rollback}
