@@ -143,6 +143,28 @@ Thus, even if attackers can overwrite the MPU configurations, they can not acces
 \subsection{Firmware and Configuration Data Protection}
 Symmetric crypto is for firmware and configuration data protection, $k_f$ and ($k_c$).
 
+Case 2: Whenever the SED$_a$ sends a targeted message to SED$_b$, it first generates an AES key $k_a$ and IV $iv_a$. 
+Then, it uses AES-GCM to encrypt and authenticate the SCEWL header ($\mathcal{H}$) and body ($\mathcal{B}$), which outputs the ciphertext ($\mathcal{C}$) and tag ($\mathcal{T}$), e.g. $\mathcal{C}, \mathcal{T}$ = ENC$_{k_a, iv_a}(\mathcal{H} || \mathcal{B})$.
+Then, it encrypts $k_a$ with $pk_b$, e.g. $\mathcal{E}=$AENC$_{pk_b}(k_a)$.
+Then, it sends out $\mathcal{M}$ = $\mathcal{H} || \mathcal{E}||iv_a||\mathcal{T}||\mathcal{C}$ (Figure \ref{fig:msg}).
+A caveat here is to calculate body length before the AES operation.
+
+Whenever SED$_b$ receives a targeted message $\mathcal{M}$, it first checks the $\mathcal{H}$ to see if the message is intended for it. If not, discard.
+Then, it uses its private key $sk_b$ to decryt the received ciphertext AES key $k_a$, e.g. $k_a$ = ADEC$_{sk_b}($AENC$_{pk_b}(k_a))$.
+Then, it uses $k_a, iv_a$ to decrypt and authenticate the message, e.g. $\mathcal{C'}, \mathcal{T'}$ = DEC$_{k_a, iv_a}(\mathcal{C})$.
+It compares $\mathcal{T'}$ and $\mathcal{T}$.
+If they do not match, discard.
+Otherwise, $\mathcal{C'}=\mathcal{H}||\mathcal{B}$.
+
+
+\begin{figure}[!htbp]
+	\begin{centering}
+		\includegraphics[width = .80\textwidth]{pic/FW_CFG_FORMAT.pdf}
+		\caption{Protected Firmware and Configuration Format}
+		\label{fig:msg}
+	\end{centering}
+\end{figure}
+
 \subsection{Readback Host Authentication}
 Asymmetric crypto is for readback functionality, the host generates a public key pair ($pk_k, sk_k$).
 The secret key $sk_k$ never leaves the host, while the public key $pk_k$ is loaded on the devices as EEPROM data.
