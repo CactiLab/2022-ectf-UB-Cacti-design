@@ -145,7 +145,7 @@ First, the host generates a random plaintext ($\mathcal{P}$), then uses HMAC wit
 Then it uses the private key $sk_k$ to encrypt the digest, $\mathcal{C}$ = ENC$_{sk_k}(\mathcal{P_H})$.
 At the beginning of the readback, the host(or attacker) sends the command \textbf{R} through UART to initiate readback.
 Then it sends the ciphertext $\mathcal{C}$ \& plaintext $\mathcal{P}$ through UART to the bootloader ($\mathcal{C}$, $\mathcal{P}$).
-The bootloader uses the public key $pk_k$ from EEPROM to decrypt the ciphertext and get the message digest $\mathcal{P_H}$.
+The bootloader uses the public key $pk_k$ from EEPROM to decrypt the ciphertext and get the message digest $\mathcal{P_H}$ = DEC$_{pk_k}(\mathcal{C})$.
 Lastly, it generates a second messages digest $\mathcal{P'_H}$ directly from the received plaintext $\mathcal{P}$ and compares both digests $\mathcal{P'_H}$, $\mathcal{P_H}$ to the readback request.
 
 \subsection{Prevent Version Rollback}
