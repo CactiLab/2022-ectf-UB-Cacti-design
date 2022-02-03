@@ -163,7 +163,9 @@ We implement a digital signature mechanism to ensure that only the valid host ca
 \end{itemize}
 
 \subsection{Prevent Version Rollback}
-  
+Bootloader maintains the version number of firmware in flash memory with MPU configuration.
+The version number is part of the encrypted body in the protected firmware binary.
+Only the newer, equal, or zero version of the firmware can be installed.
 \subsection{Defeat Hardware Trojan}
 
 \subsection{Defeat Side-channel Attacks}
