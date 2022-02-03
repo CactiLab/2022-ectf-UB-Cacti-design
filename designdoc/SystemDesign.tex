@@ -98,25 +98,24 @@ This section presents the entities and communication channels in the system.
 The following summarizes the entities in the system.
 
 \begin{itemize}
+  \item Host is a general-purpose computer in the secure facility, which is responsible for generating protected firmware and configuration data images.
 	\item A SAFFIRE bootloader is the main entity of the system to ensure the secure loading of flight configuration data and firmware with version updates on the device.
-	When the SAFFIRE bootloader receives commands to boot the firmware, it is responsible for putting firmware on SRAM and handover the execution to the firmware. 
+	It receives commands from the host to boot the firmware, put firmware on SRAM and handover the execution. 
 	Moreover, the bootloader is also responsible for providing a readback feature of the firmware and configuration data to an authenticated host.
-	
-	\item Host is a general-purpose computer in the secure facility, which is responsible for generating protected firmware and configuration data images.
-	\item  EEPROM on the Tivaware device is a hardware component accessible to the bootloader, which can be used to store data with access permissions.
-	\item The firmware in the avionic device contains the logic to control the flight during flight. 
+	\item The firmware in the avionic device contains the logic to control the flight. 
 	The firmware gets the flight itinerary from the configuration files.
 	As the flight travel is dependent on this logic and data the bootloader needs to ensure that no malicious code or data is loaded on the device.
+  \item  EEPROM on the Tivaware device is a hardware component accessible to the bootloader, which can be used to store data with access permissions.
 \end{itemize}
-
-
 
 \section{Attack Models}
 
 The attackers can carry out the following attacks:
 
 \begin{itemize}
-  \item Read from the FLASH.
+  \item Attackers may install custom or modified firmware and configurations, and compromise the flight.
+  \item Attackers may install old and buggy version of the firmware.
+  \item Attackers may access host secrets.
   \item Side-channel attack.
   \item Hardware trojan.
 \end{itemize}
