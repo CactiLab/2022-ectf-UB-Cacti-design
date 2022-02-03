@@ -135,32 +135,18 @@ AENC and ADEC stand for asymmetric encryption and decryption with RSA512.
 SIG and AUTH stand for the signature and verification with RSA512.
 
 \subsection{Key Protection}
-The asymmetric $pk_k$, symmetric $k_f$, $k_c$, and $k_v$ are kept in the EEPROM region memory for the bootloader to access at runtime.
-When the bootloader starts execution it configures the MPU, which allows only the bootloader to access the EEPROM memory.
+The asymmetric $pk_k$, symmetric $k_f$, $k_c$, and $k_v$ are kept in the EEPROM region memory for the bootloader to access at run-time.
+When the bootloader starts execution it configures the MPU, which allows only the bootloader itself to access the EEPROM memory.
 After that, it copies the keys from the EEPROM to the flash memory.
-Immediately, EEPROM blocks containing the keys are hidden using the EEPROM block hiding feature, which denies read/write access for everyone until reset.
+Immediately, EEPROM blocks containing the keys are locked using the EEPROM block locking feature, which denies read/write access for everyone until reset.
 Thus, even if attackers can overwrite the MPU configurations, they can not access the EEPROM memory.
+
 \subsection{Firmware and Configuration Data Protection}
 Symmetric crypto is used for firmware, configuration data, version number protection, $k_f$, $k_c$, and $k_v$.
 Our developed host tools implement two layers of symmetric encryption, the outer layer is to protect the authenticity, integrity of the version number and the inner layer for the firmware body.
 We keep the firmware and configuration data in encrypted form in flash memory, whereas at firmware boot time we put the decrypted firmware in SRAM and decrypt the configuration data in flash.
 Figure~\ref{fig:frmt} demonstrates the format of protected images.
-\subsubsection{Host tools}
-Our host tools first encrypt the firmware binary and release message with encryption key $k_f$ and $IV$, to generate $C_{FW}$, $tag_f$ = ENC$_{k_f, iv}$(Firmware body + Release message).
-Then we encrypt the version number and $tag_f$ with key $k_v$ and IV to generate $C_V$, $tag_v$ = ENC$_{k_v, iv}$($\mathcal{V} + tag_f$).
-We put the firmware size, IV and $tag_v$ as a header in protected image.
 
-\subsubsection{Bootloader}
-
-\textbf{Update}: Whenever the bootloader gets the update firmware command, it uses the IV and the symmetric key $k_v$ to decrypt the version number, tag $tag_f$ ($\mathcal{V}, tag_f, tag'_v$ = DEC$_{k_v, iv}(C_V)$).
-Generated tag $tag'_v$ and header tag $tag_v$ is compared for integrity checking.
-Then it checks the version number with the previously installed one to make the decision if its valid version.
-If valid we store the encrypted firmware in flash memory.
-The Bootloader also stored the tag $tag_f$, $IV$ and firmware size to use at boot time.
-
-\textbf{Boot firmware}: At firmware boot time the bootloader decrypts the firmware body and release message with key $k_f$ and $IV$ ($FW_{body}, Rel_{msg}, tag'_f$ = DEC$_{k_v, iv}(C_{FW})$).
-The tags $tag'_f$ and $tag_f$ are compared for integrity checking.
-On successful verification the bootloader puts the firmware plaintext in SRAM.
 \begin{figure}[!htbp]
 	\begin{centering}
 		\includegraphics[width = .80\textwidth]{pic/FW_CFG_FORMAT.pdf}
@@ -169,7 +155,45 @@ On successful verification the bootloader puts the firmware plaintext in SRAM.
 	\end{centering}
 \end{figure}
 
+\subsubsection{Host tools}
+Our host tools first use firmware encryption key $k_f$ and $IV$ encrypt the firmware binary and release message: ($\mathcal{C}_{FW}$, $tag_f$) = ENC$_{k_f, iv}$(Firmware Body + Release Message).
+Then we use the version encryption key $k_v$ and $IV$ to encrypt the version number and $tag_f$: ($\mathcal{C}_V$, $tag_v$) = ENC$_{k_v, iv}$($\mathcal{V} + tag_f$).
+The finalized protected firmware contains firmware size, IV and $tag_v$ as the header and $\mathcal{C}_V$ and $\mathcal{C}_{FW}$ as the body.
+
+Similar to protect the firmware, host tools use configuration key $k_c$ and $IV_c$ to encrypt the configuration: ($\mathcal{C}_{CFG}$, $tag_c$) = ENC$_{k_c, iv_c}$(Configuration Body).
+Then the protected configuration has configuration size, $IV_c$ and $tag_c$ as the header and $\mathcal{C}_{CFG}$ as the body.
+
+\subsubsection{Bootloader}
+
+\textbf{Update}: 
+
+\textit{Firmware version checking}:
+Whenever the bootloader receives the update firmware command, it uses the $IV$ and the symmetric key $k_v$ to decrypt the $C_V$: ($\mathcal{V}'$, $tag_v'$, $tag_f'$) = DEC$_{k_v, iv}(\mathcal{C}_V)$).
+If $tag_v'$ matches $tag_v$, it passes version integrity checking.
+Then it validates the version number with the previously installed one to decide whether accept or reject this update.
+If valid, bootloader keeps the tag $tag_f'$, $IV$ and firmware size to check the firmware integrity.
+
+\textit{Firmware integrity checking}:
+After validating the version number, bootloader uses $IV$ and the symmetric key $k_f$ to decrypt the $\mathcal{C}_{FW}$: ($\mathcal{P}$, $tag_f'$) = DEC$_{k_f, iv}(\mathcal{C}_{FW})$).
+If $tag_f'$ matches $tag_f$, it passes firmware integrity checking.
+Then bootloader updates the encrypted firmware ($\mathcal{C}_{FW}$) in flash memory.
+Otherwise, the update will be rejected.
+
+\textit{Configuration integrity checking}.
+Whenever the bootloader receives the update firmware command.
+The process is similar to firmware integrity checking.
+
+\textbf{Boot firmware}: 
+At firmware boot time the bootloader decrypts the firmware body and release message with key $k_f$ and $IV$ ($FW_{body}, Rel_{msg}, tag'_f$ = DEC$_{k_v, iv}(C_{FW})$).
+The tags $tag'_f$ and $tag_f$ are compared for integrity checking.
+On successful verification the bootloader puts the firmware plaintext in SRAM.
+
 The configuration data is handled the same way as the firmware with one layer of symmetric crypto with key $k_c$ and $IV_c$.
+
+\subsection{Prevent Version Rollback}
+Bootloader maintains the version number of firmware in flash memory with MPU configuration.
+The version number is part of the encrypted body in the protected firmware binary.
+Only the newer, equal, or zero version of the firmware can be installed.
 
 \subsection{Readback Host Authentication}
 Asymmetric crypto is for readback functionality, the host generates a public key pair ($pk_k, sk_k$).
@@ -192,20 +216,16 @@ We implement a digital signature mechanism to ensure that only the valid host ca
   \item [Step 4.] Decrypt the requested memory of the firmware or configuration data and write response on the UART connection for the host.
 \end{itemize}
 
-\subsection{Prevent Version Rollback}
-Bootloader maintains the version number of firmware in flash memory with MPU configuration.
-The version number is part of the encrypted body in the protected firmware binary.
-Only the newer, equal, or zero version of the firmware can be installed.
-\subsection{Defeat Hardware Trojan}
+% \subsection{Defeat Hardware Trojan}
 
-\subsection{Defeat Side-channel Attacks}
+% \subsection{Defeat Side-channel Attacks}
 
-\subsection{Build Process}
+% \subsection{Build Process}
 
-  Describe the important changes in build process.
+%   Describe the important changes in build process.
 
-\section{Implementation}
-\subsection{Critical Functions and Files}
+% \section{Implementation}
+% \subsection{Critical Functions and Files}
 
 
 % \section{Flag Protection}
