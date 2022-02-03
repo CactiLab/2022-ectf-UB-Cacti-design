@@ -32,7 +32,7 @@ if [ -d "socks" ]; then
     echo "create socks folder.."
 fi
 
-python3 tools/run_saffire.py launch-bootloader --emulated  \
+python3 tools/run_saffire.py launch-bootloader-gdb --emulated  \
     --sysname $SYS_NAME \
     --sock-root socks/ \
     --uart-sock $UART_SOCK
