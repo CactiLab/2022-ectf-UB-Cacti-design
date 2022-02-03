@@ -154,15 +154,15 @@ We put the firmware size, IV and $tag_v$ as a header in protected image.
 
 The boot loader decrypts the layer for firmware update and boot:
 
-Case 1: Whenever the boot loader gets the update firmware command, it uses the IV and the symmetric key $k_v$ to decrypt the version number, tag $tag_f$ ($\mathcal{V}, tag_f, tag'_v$ = DEC$_{k_v, iv}(C_V)$).
+\textbf{Update}: Whenever the bootloader gets the update firmware command, it uses the IV and the symmetric key $k_v$ to decrypt the version number, tag $tag_f$ ($\mathcal{V}, tag_f, tag'_v$ = DEC$_{k_v, iv}(C_V)$).
 Generated tag $tag'_v$ and header tag $tag_v$ is compared for integrity checking.
 Then it checks the version number with the previously installed one to make the decision if its valid version.
 If valid we store the encrypted firmware in flash memory.
 The Bootloader also stored the tag $tag_f$, $IV$ and firmware size to use at boot time.
 
-Case 2: At boot time the boot loader decrypts the firmware body and release message with key $k_f$ and $IV$ ($FW_{body}, Rel_{msg}, tag'_f$ = DEC$_{k_v, iv}(C_{FW})$).
+\textbf{Boot firmware}: At firmware boot time the bootloader decrypts the firmware body and release message with key $k_f$ and $IV$ ($FW_{body}, Rel_{msg}, tag'_f$ = DEC$_{k_v, iv}(C_{FW})$).
 The tags $tag'_f$ and $tag_f$ are compared for integrity checking.
-
+On successful verification the bootloader puts the firmware plaintext in SRAM.
 \begin{figure}[!htbp]
 	\begin{centering}
 		\includegraphics[width = .80\textwidth]{pic/FW_CFG_FORMAT.pdf}
