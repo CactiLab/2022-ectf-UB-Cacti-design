@@ -134,12 +134,13 @@ AENC and ADEC stand for asymmetric encryption and decryption with RSA512.
 SIG and AUTH stand for the signature and verification with RSA512.
 
 \subsection{Key Generation and Storage}
+Asymmetric crypto is for readback functionality, the host generates a public key pair ($pk_k, sk_k$).
+The secret key $sk_k$ never leaves the host, while the public key $pk_k$ is loaded on the devices as EEPROM data.
 
 \subsection{Firmware and Configuration Data Protection}
 
 \subsection{Readback Host Authentication}
-To authenticate the host for readback functionality, the host generates a public key pair ($pk_k, sk_k$).
-The secret key $sk_k$ never leaves the host, while the public key $pk_k$ is loaded on the devices as EEPROM data.
+
 We implement a digital signature mechanism to ensure that only the valid host can request a readback.
 First, the host generates a random plaintext ($\mathcal{P}$), then uses HMAC with SHA-256 to generate the digest ($\mathcal{P_H}$).
 Then it uses the private key $sk_k$ to encrypt the digest, $\mathcal{C}$ = ENC$_{sk_k}(\mathcal{P_H})$.
