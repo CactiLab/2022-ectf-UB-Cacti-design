@@ -25,4 +25,5 @@
 |----------|:-------------:|------:|------:|    
 | Flash trojan |  Figure out how can we insert the flash trojan, how it is triggered, capabilities. |C|   |
 | Reverse engineering |  |     | |  
-| Side-channel attack |  |     | |       
+| Side-channel attack |  |     | |  
+| Brute-force the password for host authentication |  |     | |       
