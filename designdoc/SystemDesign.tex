@@ -191,28 +191,28 @@ On successful verification the bootloader puts the firmware plaintext in SRAM.
 The configuration data is handled the same way as the firmware with one layer of symmetric crypto with key $k_c$ and $IV_c$.
 
 \subsection{Prevent Version Rollback}
-Bootloader maintains the version number of firmware in flash memory with MPU configuration.
+As the flash memory can be vulnerable, the bootloader maintains the current version number of firmware in CPU register, instead of flash memory.
 The version number is part of the encrypted body in the protected firmware binary.
 Only the newer, equal, or zero version of the firmware can be installed.
 
 \subsection{Readback Host Authentication}
 Asymmetric crypto is for readback functionality, the host generates a public key pair ($pk_k, sk_k$).
-The secret key $sk_k$ never leaves the host, while the public key $pk_k$ is loaded on the devices as EEPROM data.
-We implement a digital signature mechanism to ensure that only the valid host can request a readback.
+The private key $sk_k$ never leaves the host, while the public key $pk_k$ is loaded on the devices as EEPROM data.
+We implement a challenge-response mechanism to ensure that only the valid host can request a readback.
 \begin{itemize}
-  \item[Step 1.] Initialize readback function. 
-  The host (or attacker) sends the command \textbf{R} through UART to bootloader.
-  Bootloader initiates readback and waits for the authentication message.  
+  \item[Step 1.] Initiate readback. 
+  The host (or attacker) sends the command \textbf{R} through UART to the bootloader.
+  In response, bootloader sends back a randomly generated challenge number to the requesting party ($chal$).  
   \item[Step 2.] Host sends authentication message.
-  The host generates a digest ($\mathcal{P_H}$), which is a random plaintext ($\mathcal{P}$) hashed by SHA-256.
-  Then it uses the private key $sk_k$ to encrypt the digest, $\mathcal{C}$ = ENC$_{sk_k}(\mathcal{P_H})$.
-  The ciphertext $\mathcal{C}$ \& plaintext $\mathcal{P}$ will be sent through UART to the bootloader ($\mathcal{C}$, $\mathcal{P}$).
+  The host receives the challenge number from the bootloader through UART.
+  The host uses the private key $sk_k$ to encrypt the challenge number, $\mathcal{C}$ = AENC$_{sk_k}(chal)$.
+  The ciphertext $\mathcal{C}$ is sent to the bootloader as the challenge-response.
   \item[Step 3.] Bootloader authenticates the host.
-  The bootloader uses the associated public key $pk_k$ from EEPROM to decrypt the ciphertext and get the message digest $\mathcal{P_H}$ = DEC$_{pk_k}(\mathcal{C})$.
-  Lastly, it generates a second messages digest $\mathcal{P'_H}$ directly from the received plaintext $\mathcal{P}$ and compares both digests $\mathcal{P'_H}$.
+  The bootloader uses the associated public key $pk_k$ from EEPROM to decrypt the ciphertext and get the challenge number $chal'$ = ADEC$_{pk_k}(\mathcal{C})$.
+  Lastly, it compares both challenge numbers, $chal'$ and $chal$.
   If they do not match, discard.
   Otherwise: response the readback request.
-  
+  Note: Even if the attackers can be connected to the device, they don't have the private key $sk_k$ to generate the correct challenge-response.
   \item [Step 4.] Decrypt the requested memory of the firmware or configuration data and write response on the UART connection for the host.
 \end{itemize}
 
