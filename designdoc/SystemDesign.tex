@@ -128,11 +128,11 @@ The bootloader can access the associated public key $pk_k$ and three AES256-GCM 
 EEPROM also stores additional data or secrets that the bootloader needs at run-time.
 To protect the EEPROM we utilize EEPROM block hiding feature.
 
-MPU is configured to 1) set the FLASH as eXecute-Never (XN) except for the bootloader region, 2) set the FLASH as read and write (RW) for the bootloader only, 3) set the bootloader region as eXecute Only Memory (XOM). 
+MPU is configured to 1) set the FLASH as eXecute-Never (XN) except for the bootloader region, 2) set the FLASH related registers are only acceptable by the bootloader. 
 
 ENC and DEC stand for symmetric encryption and decryption with AES256-GCM.
-AENC and ADEC stand for asymmetric encryption and decryption with RSA512.
-SIG and AUTH stand for the signature and verification with RSA512.
+%AENC and ADEC stand for asymmetric encryption and decryption with RSA512.
+%SIG and AUTH stand for the signature and verification with RSA512.
 
 \subsection{Key Protection}
 The asymmetric $pk_k$, symmetric $k_f$, $k_c$, and $k_v$ are kept in the EEPROM region memory for the bootloader to access at run-time.
@@ -149,7 +149,7 @@ Figure~\ref{fig:frmt} demonstrates the format of protected images.
 
 \begin{figure}[!htbp]
 	\begin{centering}
-		\includegraphics[width = .80\textwidth]{pic/FW_CFG_FORMAT.pdf}
+		\includegraphics[width = .98\textwidth]{pic/FW_CFG_FORMAT.pdf}
 		\caption{Protected Firmware and Configuration Format}
 		\label{fig:frmt}
 	\end{centering}
@@ -191,7 +191,8 @@ On successful verification the bootloader puts the firmware plaintext in SRAM.
 The configuration data is handled the same way as the firmware with one layer of symmetric crypto with key $k_c$ and $IV_c$.
 
 \subsection{Prevent Version Rollback}
-As the flash memory can be vulnerable, the bootloader maintains the current version number of firmware in CPU register, instead of flash memory.
+As the flash memory can be vulnerable, the bootloader maintains the encrypted current version number of firmware.
+When bootloader receives the update command, it checks if the updated version is valid or not.
 The version number is part of the encrypted body in the protected firmware binary.
 Only the newer, equal, or zero version of the firmware can be installed.
 
