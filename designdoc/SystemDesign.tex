@@ -13,7 +13,7 @@ top=2.5cm, bottom=2.6cm, left=2.58cm, right=2.53cm]{geometry}
 %==============================================================================
 %\usepackage{algorithm}
 \usepackage{amssymb}
-\usepackage{color}
+\usepackage{color,soul}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{latexsym}
@@ -23,7 +23,7 @@ top=2.5cm, bottom=2.6cm, left=2.58cm, right=2.53cm]{geometry}
 \usepackage{amsthm}
 \usepackage[hyphens]{url}
 \usepackage{pifont}
-\usepackage{color}
+\usepackage{xcolor}
 \usepackage{colortbl}
 \usepackage[lined, boxed, linesnumbered]{algorithm2e}
 \usepackage[square, comma, sort&compress, numbers]{natbib}
@@ -55,6 +55,13 @@ top=2.5cm, bottom=2.6cm, left=2.58cm, right=2.53cm]{geometry}
   \setlength{\rightmargin}{0.00in}
   \setlength{\topsep}     {0.00in}}
 }{\end{list}}
+
+\newcommand{\ziming}[1]{%
+  \begingroup
+  \definecolor{hlcolor}{RGB}{20, 255, 20}\sethlcolor{hlcolor}%
+  \textcolor{black}{\hl{\textit{\textbf{Ziming:} #1}}}%
+  \endgroup
+}
 
 \let\chapter\section
 
@@ -105,7 +112,7 @@ The following summarizes the entities in the system.
 	\item The firmware in the avionic device contains the logic to control the flight. 
 	The firmware gets the flight itinerary from the configuration files.
 	As the flight travel is dependent on this logic and data the bootloader needs to ensure that no malicious code or data is loaded on the device.
-  \item  EEPROM on the Tivaware device is a hardware component accessible to the bootloader, which can be used to store data with access permissions.
+  \item  EEPROM on the Tivaware device is a hardware component accessible to the bootloader, which can be used to store data with access permissions. \ziming{EEPROM is not an entity.}
 \end{itemize}
 
 \section{Attack Models}
@@ -116,14 +123,14 @@ The attackers can carry out the following attacks:
   \item Attackers may install custom or modified firmware and configurations to compromise the flight.
   \item Attackers may install old and buggy version of the firmware.
   \item Attackers may read firmware and configuration via readback function.
-  \item Attackers may attain the password via side-channel attack.
+  \item Attackers may obtain crypto keys via side-channel attack.
   \item Attackers may access sensitive data or disable hardware protection via hardware trojan installed on FLASH.
 \end{itemize}
 
 
 \section{Our Design}
 
-The host $H$ has its private key $sk_k$ stored in the host secrets file.
+The host $H$ has its private key $sk_k$ stored in the host secret file.
 The bootloader can access the associated public key $pk_k$ and three AES256-GCM keys for firmware ($k_f$), configuration ($k_c$), and version number ($k_v$) protection, which are stored in the EEPROM.
 EEPROM also stores additional data or secrets that the bootloader needs at run-time.
 To protect the EEPROM we utilize EEPROM block hiding feature.
@@ -156,9 +163,9 @@ Figure~\ref{fig:frmt} demonstrates the format of protected images.
 \end{figure}
 
 \subsubsection{Host tools}
-Our host tools first use firmware encryption key $k_f$ and $IV$ encrypt the firmware binary and release message: ($\mathcal{C}_{FW}$, $tag_f$) = ENC$_{k_f, iv}$(Firmware Body + Release Message).
+Our host tools first use firmware encryption key $k_f$ and $IV$ encrypt the firmware binary and release message: ($\mathcal{C}_{FW}$, $tag_f$) = ENC$_{k_f, iv}$(Firmware Body $+$ Release Message).
 Then we use the version encryption key $k_v$ and $IV$ to encrypt the version number and $tag_f$: ($\mathcal{C}_V$, $tag_v$) = ENC$_{k_v, iv}$($\mathcal{V} + tag_f$).
-The finalized protected firmware contains firmware size, IV and $tag_v$ as the header and $\mathcal{C}_V$ and $\mathcal{C}_{FW}$ as the body.
+The protected firmware contains firmware size, IV and $tag_v$ as the header and $\mathcal{C}_V$ and $\mathcal{C}_{FW}$ as the body.
 
 Similar to protect the firmware, host tools use configuration key $k_c$ and $IV_c$ to encrypt the configuration: ($\mathcal{C}_{CFG}$, $tag_c$) = ENC$_{k_c, iv_c}$(Configuration Body).
 Then the protected configuration has configuration size, $IV_c$ and $tag_c$ as the header and $\mathcal{C}_{CFG}$ as the body.
