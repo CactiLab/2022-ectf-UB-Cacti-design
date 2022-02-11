@@ -112,7 +112,7 @@ The following summarizes the entities in the system.
 	\item The firmware in the avionic device contains the logic to control the flight. 
 	The firmware gets the flight itinerary from the configuration files.
 	As the flight travel is dependent on this logic and data the bootloader needs to ensure that no malicious code or data is loaded on the device.
-  \item  EEPROM on the Tivaware device is a hardware component accessible to the bootloader, which can be used to store data with access permissions. \ziming{EEPROM is not an entity.}
+  	EEPROM on the Tivaware device is a hardware component accessible to the bootloader, which can be used to store data with access permissions. %\ziming{EEPROM is not an entity.}
 \end{itemize}
 
 \section{Attack Models}
@@ -153,6 +153,9 @@ Symmetric crypto is used for firmware, configuration data, version number protec
 Our developed host tools implement two layers of symmetric encryption, the outer layer is to protect the authenticity, integrity of the version number and the inner layer for the firmware body.
 We keep the firmware and configuration data in encrypted form in flash memory, whereas at firmware boot time we put the decrypted firmware in SRAM and decrypt the configuration data in flash.
 Figure~\ref{fig:frmt} demonstrates the format of protected images.
+FW\_SIZE indicates the original firmware size, we have two tags for encrypted firmware and version, separately.
+The size of IV is 96 bit, key for symmetric crypto is 256 bit.
+Then the size of generated tag is 128 bit.
 
 \begin{figure}[!htbp]
 	\begin{centering}
