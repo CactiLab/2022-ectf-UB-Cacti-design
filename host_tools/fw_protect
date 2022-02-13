@@ -15,12 +15,47 @@ import argparse
 import json
 import logging
 from pathlib import Path
-
+from Crypto.Cipher import AES
+import struct
+import random, string, os
 from util import print_banner, FIRMWARE_ROOT, LOG_FORMAT
 
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 log = logging.getLogger(Path(__file__).name)
 
+FW_MAGIC = b'FW'
+CFG_MAGIC = b'CFG'
+IV_SIZE = 12
+# fimrware_key_path = '/secrets/keyf.bin'
+# version_number_key_path = '/secrets/keyv.bin'
+
+fimrware_key_path = 'keyf.bin'
+version_number_key_path = 'keyv.bin'
+
+def encrypt_version_number (ivf, version_data):
+    try:
+        with open(version_number_key_path, "rb") as file:
+            # Print the success message
+            key_v = file.read()
+            print(key_v.hex())
+            cipher = AES.new(key_v, AES.MODE_GCM, nonce=ivf)
+            version_ciphertext, tagv = cipher.encrypt_and_digest(version_data)
+            return version_ciphertext, tagv
+    # Raise error if the file is opened before
+    except IOError:
+        log.info("Failed to open the file: " + version_number_key_path)
+
+def encrypt_firmware_data(ivf, firmware_data):
+    try:
+        with open(fimrware_key_path, "rb") as file:
+            # Print the success message
+            key_f = file.read()
+            cipher = AES.new(key_f, AES.MODE_GCM, nonce=ivf)
+            fw_ciphertext, tagf = cipher.encrypt_and_digest(firmware_data)
+            return fw_ciphertext, tagf
+    # Raise error if the file is opened before
+    except IOError:
+        log.info("Failed to open the file: " + fimrware_key_path)
 
 def protect_firmware(
     firmware_file: Path, version: int, release_message: str, protected_firmware: Path
@@ -35,20 +70,32 @@ def protect_firmware(
 
     # Construct the metadata
     firmware_size = len(firmware_data)
+    ivf =  os.urandom(IV_SIZE)
 
+    version_number_bytes = version.to_bytes(4, 'big')
+    
+    fw_ciphertext, tagf = encrypt_firmware_data(ivf, firmware_data)
+    print(len(version_number_bytes + tagf))
+    version_ciphertext, tagv = encrypt_version_number(ivf, version_number_bytes + tagf)
+    print(version_ciphertext.hex())
+    rel_bytes = str.encode(release_message)
+    print(firmware_size)
+    print(tagv.hex())
+    print(struct.pack('<I', firmware_size))
+    print("IV")
+    print(ivf.hex())
     # Create firmware storage structure
-    data = {
-        "firmware_size": firmware_size,
-        "version_num": version,
-        "release_msg": release_message,
-        "firmware": firmware_data.hex(),
-    }
+    data = FW_MAGIC + struct.pack('<I', firmware_size) + ivf + tagv + version_ciphertext + rel_bytes + fw_ciphertext
 
     # Write to the output file
-    with protected_firmware.open("w", encoding="utf8") as fd:
-        json.dump(data, fd)
-
-    log.info("Firmware protected\n")
+    try:
+        with protected_firmware.open("wb") as fd:
+            fd.write(data)
+            log.info("Firmware protected\n")
+    except IOError:
+        log.info("-----------------FAILED TO WRITE PROTECTED BINARY----------------")
+    
+    
 
 
 def main():

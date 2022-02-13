@@ -29,11 +29,11 @@ designdoc/SystemDesign.pdf
 *.ilk
 *.map
 *.exp
-
+*.prot
 # Precompiled Headers
 *.gch
 *.pch
-
+*.project
 # Libraries
 *.lib
 *.a

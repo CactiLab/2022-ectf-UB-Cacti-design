@@ -19,6 +19,7 @@ log = logging.getLogger(Path(__file__).name)
 
 CONFIGURATION_ROOT = Path("/configuration")
 FIRMWARE_ROOT = Path("/firmware")
+# FIRMWARE_ROOT = Path("/home/tomal/Desktop/projects/eCTF22/2022-ectf-UB-Cacti-design/firmware")
 RELEASE_MESSAGES_ROOT = Path("/messages")
 
 RESP_OK = b"\x00"

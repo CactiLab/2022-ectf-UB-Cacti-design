@@ -19,7 +19,8 @@
 #include "driverlib/eeprom.h"
 #include "flash.h"
 #include "uart.h"
-
+#include "aes-gcm.h"
+#include "aestest.h"
 // this will run if EXAMPLE_AES is defined in the Makefile (see line 54)
 #ifdef EXAMPLE_AES
 #include "aes.h"
@@ -67,7 +68,6 @@
 /*While generating secrets genereate 64 bytes of garbage that will be on block 0, put the secrect starting from location 64*/
 void eeprom_data_handling()
 {
-    
     uint8_t eeprom_read[EEPROM_BLOCK_SIZE];
     //uint32_t eeprom_size = EEPROMSizeGet();
     //uint32_t block_count =  EEPROMBlockCountGet();
@@ -83,6 +83,7 @@ void eeprom_data_handling()
         protec_ret = EEPROMBlockProtectGet(i);
     }
 }
+
 void handle_boot(void)
 {    
     uint32_t size;

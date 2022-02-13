@@ -3,11 +3,11 @@
 
 #include <inttypes.h>
 
-#define keyLen 16
+#define keyLen 32
 #define ivLen 12
 #define aadLen 0
-#define ptLen 0x4000
-#define ctLen 0x4000
+#define ptLen 26
+#define ctLen 26
 #define tagLen 16
 
 typedef struct msg{
