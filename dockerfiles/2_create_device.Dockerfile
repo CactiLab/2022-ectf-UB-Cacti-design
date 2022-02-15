@@ -29,7 +29,7 @@ COPY --from=host_tools /bootloader /bootloader
 ADD platform/ /platform
 
 # Create emulator state foldersgit@github.com:mitre-cyber-academy/2022-ectf-insecure-example.git
-# RUN mkdir /flash
-# RUN mkdir /eeprom
+RUN mkdir /flash
+RUN mkdir /eeprom
 # Create padded binaries for the system bootstrappers
 RUN python3 /platform/create_images.py

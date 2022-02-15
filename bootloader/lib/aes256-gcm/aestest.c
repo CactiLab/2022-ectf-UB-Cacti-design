@@ -150,7 +150,7 @@ static int test_gcm_decryption(
 {
     int ret = 0;                // our return value
     gcm_context ctx;            // includes the AES context structure
-    uint8_t pt_buf[ctLen];          // plaintext results for comparison
+    uint8_t pt_buf[20];          // plaintext results for comparison
 
     gcm_setkey( &ctx, key, (const uint)key_len );   // setup our AES-GCM key
 
@@ -270,7 +270,7 @@ int main(void)
     fread(keyv, sizeof(keyv),1,ptr1); 
     fclose(ptr1);
     printf("\nKEY :\n");
-    phex(keyv, keyLen);
+    phex(keyv, 32);
     uint8_t output[20];
     uint8_t ct[20];
 
@@ -280,7 +280,7 @@ int main(void)
     printf("\nCipher :\n");
     phex(ct, 20);
     gcm_initialize();
-    ret = aes_gcm_decrypt_auth(output, ct, 20, keyv, keyLen, iv, ivLen, tag, tagLen);
+    ret = aes_gcm_decrypt_auth(output, ct, 20, keyv, 32, iv, 12, tag, 16);
     if (ret != 0)
     {
         printf("Authentication Failure!\n");
@@ -318,14 +318,14 @@ int main(void)
 
     // memset(ct, 0, 12);
     memset(tag, 0, 16);
-    memset(output, 0, ctLen);
+    memset(output, 0, 20);
     
 
 
     // printf("plaintext:\n");
     // phex(pt, ctLen);
     printf("key:\n");
-    phex(key, keyLen);
+    phex(key, 32);
     printf("iv:\n");
     phex(iv, 12);
 
@@ -363,7 +363,7 @@ int main(void)
     phex(ct, 32);
     // memset(output, 0, ctLen);
  
-    ret = aes_gcm_decrypt_auth(output, ct, ctLen, key, keyLen, iv, ivLen, tag, tagLen);
+    ret = aes_gcm_decrypt_auth(output, ct, 20, key, 32, iv, 12, tag, 16);
     if (ret != 0)
     {
         printf("Authentication Failure!\n");
@@ -371,7 +371,7 @@ int main(void)
     }
 
     printf("Authentication Success!\n");
-    ret |= memcmp( output, pt, ctLen );
+    ret |= memcmp( output, pt, 20 );
     if (ret == 0)
     {
         printf("Success!\n");
@@ -379,7 +379,7 @@ int main(void)
         // phex(pt_buf, ctLen);
     }
     printf("plaintext:\n");
-    phex(output, ctLen);
+    phex(output, 20);
     // printf("tag:\n");
     // phex(tag, 16);
 

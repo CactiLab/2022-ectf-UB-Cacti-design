@@ -26,11 +26,10 @@ log = logging.getLogger(Path(__file__).name)
 FW_MAGIC = b'FW'
 CFG_MAGIC = b'CFG'
 IV_SIZE = 12
-# fimrware_key_path = '/secrets/keyf.bin'
-# version_number_key_path = '/secrets/keyv.bin'
-
-fimrware_key_path = 'keyf.bin'
-version_number_key_path = 'keyv.bin'
+fimrware_key_path = "/secrets/keyf.bin"
+version_number_key_path = "/secrets/keyv.bin"
+# fimrware_key_path = 'keyf.bin'
+# version_number_key_path = 'keyv.bin'
 
 def encrypt_version_number (ivf, version_data):
     try:
@@ -75,17 +74,18 @@ def protect_firmware(
     version_number_bytes = version.to_bytes(4, 'big')
     
     fw_ciphertext, tagf = encrypt_firmware_data(ivf, firmware_data)
-    print(len(version_number_bytes + tagf))
+    log.info(len(version_number_bytes + tagf))
     version_ciphertext, tagv = encrypt_version_number(ivf, version_number_bytes + tagf)
-    print(version_ciphertext.hex())
+    log.info(version_ciphertext.hex())
     rel_bytes = str.encode(release_message)
-    print(firmware_size)
-    print(tagv.hex())
-    print(struct.pack('<I', firmware_size))
-    print("IV")
-    print(ivf.hex())
+    log.info(firmware_size)
+    log.info(tagv.hex())
+    log.info(struct.pack('<I', firmware_size))
+    log.info("IV")
+    log.info(ivf.hex())
+    log.info(len(rel_bytes))
     # Create firmware storage structure
-    data = FW_MAGIC + struct.pack('<I', firmware_size) + ivf + tagv + version_ciphertext + rel_bytes + fw_ciphertext
+    data = FW_MAGIC + struct.pack('<I', firmware_size) + ivf + tagv + version_ciphertext + struct.pack('<I', len(rel_bytes)) + rel_bytes + fw_ciphertext
 
     # Write to the output file
     try:
@@ -101,7 +101,6 @@ def protect_firmware(
 def main():
     # get arguments
     parser = argparse.ArgumentParser()
-
     parser.add_argument(
         "--firmware", help="The name of the firmware image to protect.", required=True
     )

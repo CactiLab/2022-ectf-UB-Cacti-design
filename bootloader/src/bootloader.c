@@ -21,6 +21,7 @@
 #include "uart.h"
 #include "aes-gcm.h"
 #include "aestest.h"
+#include "bootLoaderHeader.h"
 // this will run if EXAMPLE_AES is defined in the Makefile (see line 54)
 #ifdef EXAMPLE_AES
 #include "aes.h"
@@ -53,9 +54,6 @@
 
 #define CONFIGURATION_STORAGE_PTR  ((uint32_t)(CONFIGURATION_METADATA_PTR + FLASH_PAGE_SIZE))
 
-#define BOOTLOADER_SECRET_DATA_PTR 0x40 /*We cannot start from zero as block 0 cannot be hidden. */
-#define EEPROM_SECRET_BLOCK_START 0x1
-#define EEPROM_BLOCK_SIZE 64
 
 // Firmware update constants
 #define FRAME_OK 0x00
@@ -190,7 +188,12 @@ void load_data(uint32_t interface, uint32_t dst, uint32_t size)
         uart_writeb(HOST_UART, FRAME_OK);
     }
 }
-
+bool check_FW_magic(protected_fw_format *fw_meta)
+{
+    if (fw_meta->FW_magic[0] == 'F' && fw_meta->FW_magic[1] == 'W')
+        return true;
+    return false;
+}
 /**
  * @brief Update the firmware.
  */
@@ -198,27 +201,59 @@ void handle_update(void)
 {
     //eeprom_data_handling();
     // metadata
+    int ret = 0;  
     uint32_t current_version;
     uint32_t version = 0;
     uint32_t size = 0;
     uint32_t rel_msg_size = 0;
     uint8_t rel_msg[1025]; // 1024 + terminator
-
+    protected_fw_format fw_meta;
+    uint8_t version_cipher_data[VERSION_CIPHER_SIZE];
+    uint8_t output[VERSION_CIPHER_SIZE];
+    //uint8_t received_magic [FW_MAGIC_LEN];
     // Acknowledge the host
     uart_writeb(HOST_UART, 'U');
+    uart_read(HOST_UART, &fw_meta, FW_META_INFO); /*READ 34 Bytes: MAGIC(2) +  FW_SIZE(4) + IVF(12) + tagv(16)
 
-    // Receive version
-    version = ((uint32_t)uart_readb(HOST_UART)) << 8;
-    version |= (uint32_t)uart_readb(HOST_UART);
+    /*STOP udpate if magic is wrong*/ 
+    if (!check_FW_magic(&fw_meta))
+    {
+        uart_writeb(HOST_UART, FRAME_BAD);
+        return;
+    }
+    uart_read(HOST_UART, version_cipher_data, VERSION_CIPHER_SIZE);
 
+    // Get keyv from eeprom
+    EEPROMRead(keyv, 0x0, AES_KEY_LEN);
+    gcm_initialize();
+
+    memset(output, 0, VERSION_CIPHER_SIZE);
+
+    ret = aes_gcm_decrypt_auth(output, version_cipher_data, VERSION_CIPHER_SIZE, keyv, AES_KEY_LEN, fw_meta.IVf, IV_SIZE, fw_meta.tagv, TAG_SIZE);
+    if (ret != 0)
+    {
+        // Authentication failure of version data
+        uart_writeb(HOST_UART, FRAME_BAD);
+        return;
+
+    }
+    memcpy(&fw_meta.version_number, output, VERSION_CIPHER_SIZE);
+
+        // Receive release message
+    rel_msg_size = uart_readline(HOST_UART, rel_msg) + 1; // Include terminator
+    
     // Receive size
     size = ((uint32_t)uart_readb(HOST_UART)) << 24;
     size |= ((uint32_t)uart_readb(HOST_UART)) << 16;
     size |= ((uint32_t)uart_readb(HOST_UART)) << 8;
     size |= (uint32_t)uart_readb(HOST_UART);
 
-    // Receive release message
-    rel_msg_size = uart_readline(HOST_UART, rel_msg) + 1; // Include terminator
+    // Receive version
+    version = ((uint32_t)uart_readb(HOST_UART)) << 8;
+    version |= (uint32_t)uart_readb(HOST_UART);
+
+ 
+
 
     // Check the version
     current_version = *((uint32_t *)FIRMWARE_VERSION_PTR);

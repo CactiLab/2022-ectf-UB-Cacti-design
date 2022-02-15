@@ -22,18 +22,26 @@ from util import print_banner, send_packets, RESP_OK, FIRMWARE_ROOT, LOG_FORMAT
 
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 log = logging.getLogger(Path(__file__).name)
-
-
+FW_META_INFO_SIZE = 34
+VERSION_DATA_SIZE = 20
+REL_SIZE = 4
 def update_firmware(socket_number: int, firmware_file: Path):
     print_banner("SAFFIRe Firmware Update Tool")
-
+    protected_fw_data = b''
     log.info("Reading firmware file...")
     with firmware_file.open("rb") as fw:
-        data = json.load(fw)
-        version_num: int = data["version_num"]
-        release_msg: str = data["release_msg"]
-        firmware = bytes.fromhex(data["firmware"])
-        firmware_size = len(firmware)
+        protected_fw_data = fw.read()
+        FW_meta_data = protected_fw_data[0:FW_META_INFO_SIZE]
+        # log.info(FW_meta_data.hex())
+        version_data = protected_fw_data[FW_META_INFO_SIZE: FW_META_INFO_SIZE + VERSION_DATA_SIZE]
+        # log.info(version_data.hex())
+        rel_message_size_bytes =  protected_fw_data[FW_META_INFO_SIZE + VERSION_DATA_SIZE : FW_META_INFO_SIZE + VERSION_DATA_SIZE + REL_SIZE]
+        actual_rel_size = struct.unpack('<I',rel_message_size_bytes)[0]
+        # log.info(actual_rel_size)
+        rel_msg_bytes = protected_fw_data[FW_META_INFO_SIZE + VERSION_DATA_SIZE+ REL_SIZE : FW_META_INFO_SIZE + VERSION_DATA_SIZE+ REL_SIZE + actual_rel_size]
+        # log.info(rel_msg_bytes.hex())
+        firmware = protected_fw_data[FW_META_INFO_SIZE + VERSION_DATA_SIZE+ REL_SIZE + actual_rel_size : ]
+        # log.info(firmware.hex())
 
     # Connect to the bootloader
     log.info("Connecting socket...")
@@ -50,17 +58,31 @@ def update_firmware(socket_number: int, firmware_file: Path):
             pass
 
         # Send the version, size, and release message
-        log.info("Sending version, size, and release message...")
-        payload = (
-            struct.pack(">HI", version_num, firmware_size)
-            + release_msg.encode()
-            + b"\x00"
-        )
-        sock.send(payload)
+        log.info("Sending MAGIC, FW size, IVF, and Tagv...")
+
+        sock.send(FW_meta_data)
+        #Wait for bootloader response after magic checking
+        response = sock.recv(1)
+        log.info("Response : " + str(response))
+        if response != RESP_OK:
+            exit(f"ERROR: Bootloader responded with {repr(response)}")
+        else:
+            log.info(f"Magic byte verification success")
+
+        #Send version data
+        sock.send(version_data)
+        #Wait for bootloader response after version intergrity checking
         response = sock.recv(1)
         if response != RESP_OK:
             exit(f"ERROR: Bootloader responded with {repr(response)}")
-
+        else:
+            log.info(f"Version verification success")
+        
+        #Send Release message
+        log.info("Sending Release Message....")
+        payload = (rel_msg_bytes + b"\x00")
+        sock.send(payload)
+        
         # Send packets
         log.info("Sending firmware packets...")
         send_packets(sock, firmware)
