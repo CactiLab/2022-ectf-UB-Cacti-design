@@ -28,38 +28,6 @@
 #endif
 
 
-// Storage layout
-
-/*
- * Firmware:
- *      Version: 0x0002B400 : 0x0002B404 (4B)
- *      Size:    0x0002B404 : 0x0002B408 (4B)
- *      Msg:     0x0002B408 : 0x0002BC00 (~2KB = 1KB + 1B + pad)
- *      Fw:      0x0002BC00 : 0x0002FC00 (16KB)
- * Configuration:
- *      Size:    0x0002FC00 : 0x0003000 (1KB = 4B + pad)
- *      Cfg:     0x00030000 : 0x0004000 (64KB)
- */
-#define FIRMWARE_METADATA_PTR      ((uint32_t)(FLASH_START + 0x0002B400))
-#define FIRMWARE_SIZE_PTR          ((uint32_t)(FIRMWARE_METADATA_PTR + 0))
-#define FIRMWARE_VERSION_PTR       ((uint32_t)(FIRMWARE_METADATA_PTR + 4))
-#define FIRMWARE_RELEASE_MSG_PTR   ((uint32_t)(FIRMWARE_METADATA_PTR + 8))
-#define FIRMWARE_RELEASE_MSG_PTR2  ((uint32_t)(FIRMWARE_METADATA_PTR + FLASH_PAGE_SIZE))
-
-#define FIRMWARE_STORAGE_PTR       ((uint32_t)(FIRMWARE_METADATA_PTR + (FLASH_PAGE_SIZE*2)))
-#define FIRMWARE_BOOT_PTR          ((uint32_t)0x20004000)
-
-#define CONFIGURATION_METADATA_PTR ((uint32_t)(FIRMWARE_STORAGE_PTR + (FLASH_PAGE_SIZE*16)))
-#define CONFIGURATION_SIZE_PTR     ((uint32_t)(CONFIGURATION_METADATA_PTR + 0))
-
-#define CONFIGURATION_STORAGE_PTR  ((uint32_t)(CONFIGURATION_METADATA_PTR + FLASH_PAGE_SIZE))
-
-
-// Firmware update constants
-#define FRAME_OK 0x00
-#define FRAME_BAD 0x01
-
-
 /**
  * @brief Boot the firmware.
  */
