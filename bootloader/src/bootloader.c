@@ -243,31 +243,19 @@ void handle_update(void)
     }
     //Acknowledge version data verification success
     uart_writeb(HOST_UART, FRAME_OK);
-    memcpy(&fw_meta.version_number, output, VERSION_CIPHER_SIZE);
+    memcpy((uint32_t)&fw_meta.version_number, output, sizeof(int));
+    memcpy(&fw_meta.tagf, &output[sizeof(int)] , VERSION_CIPHER_SIZE - sizeof(int));
 
-        // Receive release message
+    // Receive release message
     rel_msg_size = uart_readline(HOST_UART, rel_msg) + 1; // Include terminator
     
-    // Receive size
-    size = ((uint32_t)uart_readb(HOST_UART)) << 24;
-    size |= ((uint32_t)uart_readb(HOST_UART)) << 16;
-    size |= ((uint32_t)uart_readb(HOST_UART)) << 8;
-    size |= (uint32_t)uart_readb(HOST_UART);
-
-    // Receive version
-    version = ((uint32_t)uart_readb(HOST_UART)) << 8;
-    version |= (uint32_t)uart_readb(HOST_UART);
-
- 
-
-
     // Check the version
     current_version = *((uint32_t *)FIRMWARE_VERSION_PTR);
     if (current_version == 0xFFFFFFFF) {
         current_version = (uint32_t)OLDEST_VERSION;
     }
 
-    if ((version != 0) && (version < current_version)) {
+    if ((fw_meta.version_number != 0) && (fw_meta.version_number < current_version)) {
         // Version is not acceptable
         uart_writeb(HOST_UART, FRAME_BAD);
         return;

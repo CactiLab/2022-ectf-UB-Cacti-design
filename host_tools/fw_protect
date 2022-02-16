@@ -32,6 +32,8 @@ version_number_key_path = "/secrets/keyv.bin"
 # version_number_key_path = 'keyv.bin'
 
 def encrypt_version_number (ivf, version_data):
+    # log.info("20 bytes of version number and tagf:")
+    # log.info(version_data.hex())
     try:
         with open(version_number_key_path, "rb") as file:
             # Print the success message
@@ -75,18 +77,19 @@ def protect_firmware(
     # Construct the metadata
     firmware_size = len(firmware_data)
     ivf =  os.urandom(IV_SIZE)
-
-    version_number_bytes = version.to_bytes(4, 'big')
+    # log.info("Version number: " + str(version))
+    # version_number_bytes = version.to_bytes(4, 'big')
     
     fw_ciphertext, tagf = encrypt_firmware_data(ivf, firmware_data)
-    log.info(len(version_number_bytes + tagf))
-    version_ciphertext, tagv = encrypt_version_number(ivf, version_number_bytes + tagf)
-    log.info(version_ciphertext.hex())
+    # log.info("TagF:")
+    # log.info(tagf.hex())
+    version_ciphertext, tagv = encrypt_version_number(ivf, struct.pack('<I', version) + tagf)
+    # log.info(version_ciphertext.hex())
     rel_bytes = str.encode(release_message)
-    log.info(firmware_size)
-    log.info(tagv.hex())
-    log.info(struct.pack('<I', firmware_size))
-    log.info(len(rel_bytes))
+    # log.info(firmware_size)
+    # log.info(tagv.hex())
+    # log.info(struct.pack('<I', firmware_size))
+    # log.info(len(rel_bytes))
     # Create firmware storage structure
     data = FW_MAGIC + struct.pack('<I', firmware_size) + ivf + tagv + version_ciphertext + struct.pack('<I', len(rel_bytes)) + rel_bytes + fw_ciphertext
 
