@@ -375,6 +375,8 @@ void handle_configure(void)
     
     // Retrieve configuration
     load_data_original(HOST_UART, CONFIGURATION_STORAGE_PTR, size);
+    uart_writeb(HOST_UART, FRAME_OK); /*remove this later*/
+
 }
 
 

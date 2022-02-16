@@ -32,51 +32,46 @@ if [ -d "socks" ]; then
     echo "create socks folder.."
 fi
 
-python3 tools/run_saffire.py launch-bootloader-gdb --emulated  \
+python3 tools/run_saffire.py launch-bootloader --emulated  \
     --sysname $SYS_NAME \
     --sock-root socks/ \
     --uart-sock $UART_SOCK
-# python3 tools/run_saffire.py launch-bootloader --emulated  \
-#     --sysname $SYS_NAME \
-#     --sock-root socks/ \
-#     --uart-sock $UART_SOCK
 
 # # 3. Protect the SAFFIRe Files
-# python3 tools/run_saffire.py fw-protect --emulated \
-#     --sysname $SYS_NAME \
-#     --fw-root firmware/ \
-#     --raw-fw-file example_fw.bin \
-#     --protected-fw-file example_fw.prot \
-#     --fw-version 2 \
-#     --fw-message 'hello world'
+python3 tools/run_saffire.py fw-protect --emulated \
+     --sysname $SYS_NAME \
+     --fw-root firmware/ \
+     --raw-fw-file example_fw.bin \
+     --protected-fw-file example_fw.prot \
+     --fw-version 2 \
+     --fw-message 'hello world'
 
-# python3 tools/run_saffire.py cfg-protect --emulated \
-#     --sysname $SYS_NAME \
-#     --cfg-root configuration/ \
-#     --raw-cfg-file example_cfg.bin \
-#     --protected-cfg-file example_cfg.prot
-
+python3 tools/run_saffire.py cfg-protect --emulated \
+     --sysname $SYS_NAME \
+     --cfg-root configuration/ \
+     --raw-cfg-file example_cfg.bin \
+     --protected-cfg-file example_cfg.prot
 # # 4. Update and Load the Bootloader
-# python3 tools/run_saffire.py fw-update --emulated \
-#     --sysname $SYS_NAME \
-#     --fw-root firmware/ \
-#     --uart-sock $UART_SOCK \
-#     --protected-fw-file example_fw.prot
-# python3 tools/run_saffire.py cfg-load --emulated \
-#     --sysname $SYS_NAME \
-#     --cfg-root configuration/ \
-#     --uart-sock $UART_SOCK \
-#     --protected-cfg-file example_cfg.prot
+python3 tools/run_saffire.py fw-update --emulated \
+     --sysname $SYS_NAME \
+     --fw-root firmware/ \
+     --uart-sock $UART_SOCK \
+     --protected-fw-file example_fw.prot
+python3 tools/run_saffire.py cfg-load --emulated \
+     --sysname $SYS_NAME \
+     --cfg-root configuration/ \
+     --uart-sock $UART_SOCK \
+     --protected-cfg-file example_cfg.prot
 
 # # 5. Readback
-# python3 tools/run_saffire.py fw-readback --emualted \
-#     --sysname $SYS_NAME \
-#     --uart-sock $UART_SOCK \
-#     --rb-len 100
-# python3 tools/run_saffire.py cfg-readback --emulated \
-#     --sysname $SYS_NAME \
-#     --uart-sock $UART_SOCK \
-#     --rb-len 100
+python3 tools/run_saffire.py fw-readback --emualted \
+     --sysname $SYS_NAME \
+     --uart-sock $UART_SOCK \
+     --rb-len 100
+python3 tools/run_saffire.py cfg-readback --emulated \
+     --sysname $SYS_NAME \
+     --uart-sock $UART_SOCK \
+     --rb-len 100
 
 # # 6. Boot firmware
 # python3 tools/run_saffire.py boot --emulated \
@@ -90,3 +85,4 @@ python3 tools/run_saffire.py launch-bootloader-gdb --emulated  \
 
 # # 7. Shutting Down the Bootloader
 # python3 tools/run_saffire.py kill-system --emulated --sysname $SYS_NAME
+
