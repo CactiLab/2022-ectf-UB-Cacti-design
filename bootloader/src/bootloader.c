@@ -221,6 +221,10 @@ void handle_update(void)
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
     }
+    
+    uart_writeb(HOST_UART, FRAME_OK);
+
+
     uart_read(HOST_UART, version_cipher_data, VERSION_CIPHER_SIZE);
 
     // Get keyv from eeprom
