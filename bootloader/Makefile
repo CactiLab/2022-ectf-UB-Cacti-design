@@ -37,7 +37,7 @@ CFLAGS+=-DOLDEST_VERSION=${OLDEST_VERSION}
 all: ${COMPILER}
 
 # this must be the last build rule of `all`
-all: ${COMPILER}/bootloader.axf
+all: ${COMPILER}/aes.o ${COMPILER}/aes-gcm.o ${COMPILER}/gcm.o ${COMPILER}/bootloader.axf
 
 
 ################ start crypto example ################
@@ -48,13 +48,13 @@ all: ${COMPILER}/bootloader.axf
 ifdef EXAMPLE_AES
 # path to crypto library
 CRYPTOPATH=${ROOT}/lib/tiny-AES-c
-
+AES_GCM_CRYPTOPATH=${ROOT}/lib/aes256-gcm
 # add path to crypto source files to source path
 VPATH+=${CRYPTOPATH}
-
+VPATH+=${AES_GCM_CRYPTOPATH}
 # add crypto library to includes path
 IPATH+=${CRYPTOPATH}
-
+IPATH+=${AES_GCM_CRYPTOPATH}
 # add crypto object file to includes path
 # LDFLAGS+=${COMPILER}/aes.o
 
@@ -65,9 +65,18 @@ CFLAGS+=-DEXAMPLE_AES
 ${COMPILER}/bootloader.axf: ${COMPILER}/aes.o
 endif
 ################ end crypto example ################
+#ADD AES_GCM crypto
 
+AES_GCM_CRYPTOPATH=${ROOT}/lib/aes256-gcm
 
+IPATH+=${AES_GCM_CRYPTOPATH}
+VPATH+=${AES_GCM_CRYPTOPATH}
 
+# add crypto object file to includes path
+LDFLAGS+=${COMPILER}/aes.o
+LDFLAGS+=${COMPILER}/aes-gcm.o
+LDFLAGS+=${COMPILER}/gcm.o
+#ADD AES_GCM crypto end
 
 # build libraries
 ${TIVA_ROOT}/driverlib/${COMPILER}/libdriver.a:

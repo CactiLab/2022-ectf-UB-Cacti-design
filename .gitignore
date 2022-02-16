@@ -11,7 +11,7 @@ socks
 *.aux
 *.gz
 *.log
-
+designdoc/SystemDesign.pdf
 # Created by https://www.toptal.com/developers/gitignore/api/python,c,c++,git,pycharm
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,c,c++,git,pycharm
 
@@ -29,11 +29,11 @@ socks
 *.ilk
 *.map
 *.exp
-
+*.prot
 # Precompiled Headers
 *.gch
 *.pch
-
+*.project
 # Libraries
 *.lib
 *.a
@@ -366,3 +366,5 @@ cython_debug/
 #.idea/
 
 # End of https://www.toptal.com/developers/gitignore/api/python,c,c++,git,pycharm
+designdoc/SystemDesign.fdb_latexmk
+designdoc/SystemDesign.fls
