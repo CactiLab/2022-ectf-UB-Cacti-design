@@ -72,6 +72,8 @@ def update_firmware(socket_number: int, firmware_file: Path):
 
         #Send version data
         sock.send(version_data)
+        log.info(version_data.hex())
+        log.info("VERSION DATA size: " + str(len(version_data)))
         #Wait for bootloader response after version intergrity checking
         response = sock.recv(1)
         if response != RESP_OK:
