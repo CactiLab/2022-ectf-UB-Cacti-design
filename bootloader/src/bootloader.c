@@ -233,7 +233,7 @@ void handle_update(void)
 
     memset(output, 0, VERSION_CIPHER_SIZE);
 
-    ret = aes_gcm_decrypt_auth(output, version_cipher_data, VERSION_CIPHER_SIZE, AES_KEY_LEN, keyv, fw_meta.IVf, IV_SIZE, fw_meta.tagv, TAG_SIZE);
+    ret = aes_gcm_decrypt_auth(output, version_cipher_data, VERSION_CIPHER_SIZE, keyv, AES_KEY_LEN, fw_meta.IVf, IV_SIZE, fw_meta.tagv, TAG_SIZE);
     if (ret != 0)
     {
         // Authentication failure of version data
