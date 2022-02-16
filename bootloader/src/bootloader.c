@@ -154,7 +154,6 @@ void handle_readback(void)
     uart_write(HOST_UART, address, size);
 }
 
-
 /**
  * @brief Read data from a UART interface and program to flash memory.
  * 
@@ -162,7 +161,7 @@ void handle_readback(void)
  * @param dst is the starting page address to store the data.
  * @param size is the number of bytes to load.
  */
-void load_data(uint32_t interface, uint32_t dst, uint32_t size)
+void load_data_original(uint32_t interface, uint32_t dst, uint32_t size)
 {
     int i;
     uint32_t frame_size;
@@ -188,6 +187,84 @@ void load_data(uint32_t interface, uint32_t dst, uint32_t size)
         uart_writeb(HOST_UART, FRAME_OK);
     }
 }
+
+void load_verified_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size)
+{
+    int i;
+    uint32_t frame_size;
+    uint8_t page_buffer[FLASH_PAGE_SIZE];
+
+    while(size > 0) {
+        // calculate frame size
+        frame_size = size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : size;
+        
+        memcpy(page_buffer, source, frame_size);
+        // pad buffer if frame is smaller than the page
+        for(i = frame_size; i < FLASH_PAGE_SIZE; i++) {
+            page_buffer[i] = 0xFF;
+        }
+        // clear flash page
+        flash_erase_page(dst);
+        // write flash page
+        flash_write((uint32_t *)page_buffer, dst, FLASH_PAGE_SIZE >> 2);
+        // next page and decrease size
+        dst += FLASH_PAGE_SIZE;
+        size -= frame_size;
+    }
+}
+
+
+bool verify_FW_cipher(uint32_t size, uint8_t *cipher, uint8_t *FW_plaintext, uint8_t *IVf, uint8_t *tagf)
+{
+    int ret = 0;
+    // Get keyf from eeprom
+    EEPROMRead(keyf, EEPROM_KEYF_ADDRESS, AES_KEY_LEN);
+    // gcm_initialize();
+    ret = aes_gcm_decrypt_auth(FW_plaintext, cipher, size, keyf, AES_KEY_LEN, IVf, IV_SIZE, tagf, TAG_SIZE);
+
+    memset(keyf, 0, AES_KEY_LEN);
+
+    if (ret != 0)
+    {
+        // Authentication failure of version data
+        return false;
+    }
+    //Firmware data aunthentication success
+    return true;
+}
+void handle_FW_verification_response(protected_fw_format *fw_meta)
+{
+    int i;
+    uint32_t frame_size, current_indx = 0;
+    uint32_t f_size = fw_meta->FW_size;
+    uint8_t FW_plaintext[f_size];
+    uint8_t FW_cipher[f_size];
+    uint8_t page_buffer[FLASH_PAGE_SIZE];
+
+    while(f_size > 0) {
+        // calculate frame size
+        frame_size = f_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : f_size;
+        // read frame into buffer
+        uart_read(HOST_UART, page_buffer, frame_size);
+        memcpy(&FW_cipher[current_indx], page_buffer, frame_size);
+        f_size -= frame_size;
+        current_indx += frame_size;
+        // send frame ok
+        uart_writeb(HOST_UART, FRAME_OK);
+    }
+    //read encrypted fw cipher
+    if (verify_FW_cipher(fw_meta->FW_size, FW_cipher, FW_plaintext, &(fw_meta->IVf), &(fw_meta->tagf)))
+    {
+        memset(FW_plaintext, 0, VERSION_CIPHER_SIZE);
+        uart_writeb(HOST_UART, FRAME_OK);
+        load_verified_data_on_flash(FW_cipher, FIRMWARE_STORAGE_PTR, fw_meta->FW_size);
+    }
+    else
+    {
+        /*Firmware data verification failed notification*/
+        uart_writeb(HOST_UART, FRAME_BAD);
+    }
+}
 bool check_FW_magic(protected_fw_format *fw_meta)
 {
     if (fw_meta->FW_magic[0] == 'F' && fw_meta->FW_magic[1] == 'W')
@@ -199,20 +276,18 @@ bool check_FW_magic(protected_fw_format *fw_meta)
  */
 void handle_update(void)
 {
-    eeprom_data_handling();
     // metadata
     int ret = 0;  
     uint32_t current_version;
-    uint32_t version = 0;
-    uint32_t size = 0;
     uint32_t rel_msg_size = 0;
-    uint8_t rel_msg[1025]; // 1024 + terminator
+    uint8_t rel_msg[MAX_RELEASE_MESSAGE_SIZE]; // 1024 + terminator
     protected_fw_format fw_meta;
     uint8_t version_cipher_data[VERSION_CIPHER_SIZE];
     uint8_t output[VERSION_CIPHER_SIZE];
-    //uint8_t received_magic [FW_MAGIC_LEN];
+
     // Acknowledge the host
     uart_writeb(HOST_UART, 'U');
+
     uart_read(HOST_UART, &fw_meta, FW_META_INFO); /*READ 34 Bytes: MAGIC(2) +  FW_SIZE(4) + IVF(12) + tagv(16)
 
     /*STOP udpate if magic is wrong*/ 
@@ -221,19 +296,18 @@ void handle_update(void)
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
     }
-    
+    //Acknowledge magic number verification
     uart_writeb(HOST_UART, FRAME_OK);
-
-
     uart_read(HOST_UART, version_cipher_data, VERSION_CIPHER_SIZE);
 
     // Get keyv from eeprom
-    EEPROMRead(keyv, 0x0, AES_KEY_LEN);
+    EEPROMRead(keyv, EEPROM_KEYV_ADDRESS, AES_KEY_LEN);
     gcm_initialize();
 
     memset(output, 0, VERSION_CIPHER_SIZE);
 
     ret = aes_gcm_decrypt_auth(output, version_cipher_data, VERSION_CIPHER_SIZE, keyv, AES_KEY_LEN, &fw_meta.IVf, IV_SIZE, &fw_meta.tagv, TAG_SIZE);
+
     if (ret != 0)
     {
         // Authentication failure of version data
@@ -241,8 +315,12 @@ void handle_update(void)
         return;
 
     }
+    //Clear the version number key
+    memset(keyv, 0, AES_KEY_LEN);
+
     //Acknowledge version data verification success
     uart_writeb(HOST_UART, FRAME_OK);
+
     memcpy((uint32_t)&fw_meta.version_number, output, sizeof(int));
     memcpy(&fw_meta.tagf, &output[sizeof(int)] , VERSION_CIPHER_SIZE - sizeof(int));
 
@@ -265,14 +343,14 @@ void handle_update(void)
     flash_erase_page(FIRMWARE_METADATA_PTR);
 
     // Only save new version if it is not 0
-    if (version != 0) {
-        flash_write_word(version, FIRMWARE_VERSION_PTR);
+    if (fw_meta.version_number != 0) {
+        flash_write_word(fw_meta.version_number, FIRMWARE_VERSION_PTR);
     } else {
         flash_write_word(current_version, FIRMWARE_VERSION_PTR);
     }
 
     // Save size
-    flash_write_word(size, FIRMWARE_SIZE_PTR);
+    flash_write_word(fw_meta.FW_size, FIRMWARE_SIZE_PTR);
 
     // Write release message
     uint8_t *rel_msg_read_ptr = rel_msg;
@@ -298,11 +376,11 @@ void handle_update(void)
     }
     flash_write((uint32_t *)rel_msg_read_ptr, rel_msg_write_ptr, rem_bytes >> 2);
 
-    // Acknowledge
+    // Acknowledge release message
     uart_writeb(HOST_UART, FRAME_OK);
     
     // Retrieve firmware
-    load_data(HOST_UART, FIRMWARE_STORAGE_PTR, size);
+    handle_FW_verification_response(&fw_meta);
 }
 
 
@@ -328,7 +406,7 @@ void handle_configure(void)
     uart_writeb(HOST_UART, FRAME_OK);
     
     // Retrieve configuration
-    load_data(HOST_UART, CONFIGURATION_STORAGE_PTR, size);
+    load_data_original(HOST_UART, CONFIGURATION_STORAGE_PTR, size);
 }
 
 

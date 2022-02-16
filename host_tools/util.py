@@ -62,3 +62,9 @@ def send_packets(sock: socket.socket, data: bytes):
 
         if resp != RESP_OK:
             exit(f"ERROR: Bootloader responded with {repr(resp)}")
+
+    resp = sock.recv(1)  # Bootloader firmware itegrity verification check
+    if resp != RESP_OK:
+            exit(f"ERROR: Bootloader responded with {repr(resp)}")
+    else:
+        log.debug("Firmware intergity verification failed")

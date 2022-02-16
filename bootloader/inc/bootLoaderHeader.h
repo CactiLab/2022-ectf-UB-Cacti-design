@@ -5,6 +5,9 @@
 #define BOOTLOADER_SECRET_DATA_PTR 0x40 /*We cannot start from zero as block 0 cannot be hidden. */
 #define EEPROM_SECRET_BLOCK_START 0x1
 #define EEPROM_BLOCK_SIZE 64
+#define EEPROM_KEYV_ADDRESS 0x0
+#define EEPROM_KEYF_ADDRESS 0x20
+#define EEPROM_KEYC_ADDRESS 0x40
 #define FW_MAGIC_LEN 2
 #define CFG_MAGIC_LEN 3
 #define IV_SIZE 12
@@ -12,6 +15,7 @@
 #define VERSION_CIPHER_SIZE 20
 #define AES_KEY_LEN 32
 #define FW_META_INFO (FW_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE)
+#define MAX_RELEASE_MESSAGE_SIZE 1025
 // #define FW_META_INFO 12
 // The key values will be populated from EEPROM data
 uint8_t keyv[AES_KEY_LEN];

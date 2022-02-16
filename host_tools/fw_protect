@@ -56,8 +56,18 @@ def encrypt_firmware_data(ivf, firmware_data):
         with open(fimrware_key_path, "rb") as file:
             # Print the success message
             key_f = file.read()
+            # log.info("KEY f: ")
+            # log.info(key_f.hex())
+            # log.info("KEY IVf: ")
+            # log.info(ivf.hex())
+            # log.info("firmware_data:")
+            # log.info(firmware_data.hex())
             cipher = AES.new(key_f, AES.MODE_GCM, nonce=ivf)
             fw_ciphertext, tagf = cipher.encrypt_and_digest(firmware_data)
+            # log.info("firmware_data cipher:")
+            # log.info(fw_ciphertext.hex())
+            # log.info("firmware tag:")
+            # log.info(tagf.hex())
             return fw_ciphertext, tagf
     # Raise error if the file is opened before
     except IOError:
@@ -97,7 +107,7 @@ def protect_firmware(
     try:
         with protected_firmware.open("wb") as fd:
             fd.write(data)
-            log.info("Firmware protected\n")
+            log.info("Firmware protected...\n")
     except IOError:
         log.info("-----------------FAILED TO WRITE PROTECTED BINARY----------------")
     

@@ -59,12 +59,12 @@ def update_firmware(socket_number: int, firmware_file: Path):
 
         # Send the version, size, and release message
         log.info("Sending MAGIC, FW size, IVF, and Tagv...")
-        log.info(FW_meta_data.hex())
-        log.info("Meta data size :" + str(len(FW_meta_data)))
+        # log.info(FW_meta_data.hex())
+        # log.info("Meta data size :" + str(len(FW_meta_data)))
         sock.send(FW_meta_data)
         #Wait for bootloader response after magic checking
         response = sock.recv(1)
-        log.info("Response : " + str(response))
+
         if response != RESP_OK:
             exit(f"ERROR: Bootloader responded with {repr(response)}")
         else:
@@ -72,8 +72,8 @@ def update_firmware(socket_number: int, firmware_file: Path):
 
         #Send version data
         sock.send(version_data)
-        log.info(version_data.hex())
-        log.info("VERSION DATA size: " + str(len(version_data)))
+        # log.info(version_data.hex())
+        # log.info("VERSION DATA size: " + str(len(version_data)))
         #Wait for bootloader response after version intergrity checking
         response = sock.recv(1)
         if response != RESP_OK:
@@ -86,7 +86,15 @@ def update_firmware(socket_number: int, firmware_file: Path):
         payload = (rel_msg_bytes + b"\x00")
         #log.info('Release Message bytes: ' + str(payload))
         sock.send(payload)
+        response = sock.recv(1)
+        if response != RESP_OK:
+            exit(f"ERROR: Bootloader responded with {repr(response)}")
+        else:
+            log.info(f"Release message ACK received")
         
+        # log.info("Firmware size: " + str(len(firmware)))
+        # log.info(firmware.hex())
+
         # Send packets
         log.info("Sending firmware packets...")
         send_packets(sock, firmware)
