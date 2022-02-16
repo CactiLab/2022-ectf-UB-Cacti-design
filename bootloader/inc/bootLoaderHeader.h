@@ -12,7 +12,7 @@
 #define VERSION_CIPHER_SIZE 20
 #define AES_KEY_LEN 32
 #define FW_META_INFO (FW_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE)
-
+// #define FW_META_INFO 12
 // The key values will be populated from EEPROM data
 uint8_t keyv[AES_KEY_LEN];
 uint8_t keyf[AES_KEY_LEN];
