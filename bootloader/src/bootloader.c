@@ -20,7 +20,7 @@
 #include "flash.h"
 #include "uart.h"
 #include "aes-gcm.h"
-#include "aestest.h"
+
 #include "bootLoaderHeader.h"
 // this will run if EXAMPLE_AES is defined in the Makefile (see line 54)
 #ifdef EXAMPLE_AES
@@ -233,7 +233,7 @@ void handle_update(void)
 
     memset(output, 0, VERSION_CIPHER_SIZE);
 
-    ret = aes_gcm_decrypt_auth(output, version_cipher_data, VERSION_CIPHER_SIZE, keyv, AES_KEY_LEN, fw_meta.IVf, IV_SIZE, fw_meta.tagv, TAG_SIZE);
+    ret = aes_gcm_decrypt_auth(output, version_cipher_data, VERSION_CIPHER_SIZE, keyv, AES_KEY_LEN, &fw_meta.IVf, IV_SIZE, &fw_meta.tagv, TAG_SIZE);
     if (ret != 0)
     {
         // Authentication failure of version data
@@ -241,6 +241,8 @@ void handle_update(void)
         return;
 
     }
+    //Acknowledge version data verification success
+    uart_writeb(HOST_UART, FRAME_OK);
     memcpy(&fw_meta.version_number, output, VERSION_CIPHER_SIZE);
 
         // Receive release message

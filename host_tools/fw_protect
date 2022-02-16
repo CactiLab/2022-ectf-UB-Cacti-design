@@ -36,7 +36,12 @@ def encrypt_version_number (ivf, version_data):
         with open(version_number_key_path, "rb") as file:
             # Print the success message
             key_v = file.read()
-            print(key_v.hex())
+            # log.info("KEY V: ")
+            # log.info(key_v.hex())
+            # log.info("KEY IVf: ")
+            # log.info(ivf.hex())
+            # log.info("Version cipher:")
+            # log.info(version_data.hex())
             cipher = AES.new(key_v, AES.MODE_GCM, nonce=ivf)
             version_ciphertext, tagv = cipher.encrypt_and_digest(version_data)
             return version_ciphertext, tagv
@@ -81,8 +86,6 @@ def protect_firmware(
     log.info(firmware_size)
     log.info(tagv.hex())
     log.info(struct.pack('<I', firmware_size))
-    log.info("IV")
-    log.info(ivf.hex())
     log.info(len(rel_bytes))
     # Create firmware storage structure
     data = FW_MAGIC + struct.pack('<I', firmware_size) + ivf + tagv + version_ciphertext + struct.pack('<I', len(rel_bytes)) + rel_bytes + fw_ciphertext
