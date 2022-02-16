@@ -59,7 +59,8 @@ def update_firmware(socket_number: int, firmware_file: Path):
 
         # Send the version, size, and release message
         log.info("Sending MAGIC, FW size, IVF, and Tagv...")
-
+        log.info(FW_meta_data.hex())
+        log.info("Meta data size :" + str(len(FW_meta_data)))
         sock.send(FW_meta_data)
         #Wait for bootloader response after magic checking
         response = sock.recv(1)
