@@ -64,9 +64,15 @@ typedef struct __attribute__((packed))
   uint32_t version_number;
   uint8_t tagf[TAG_SIZE];
 } protected_fw_format;
-#endif
 
 
+typedef struct __attribute__((packed))
+{
+  uint8_t IVf[IV_SIZE]; // 12 bytes -> 18
+  uint8_t tagf[TAG_SIZE];
+} fw_boot_meta_data;
+
+fw_boot_meta_data boot_meta;
 //FUNCTIONS in bootloader.c
 
 void handle_boot(void);
@@ -78,3 +84,5 @@ void handle_FW_verification_response(protected_fw_format *fw_meta);
 bool check_FW_magic(protected_fw_format *fw_meta);
 void handle_update(void);
 void handle_configure(void);
+
+#endif

@@ -55,16 +55,29 @@ void handle_boot(void)
     uint32_t size;
     uint32_t i = 0;
     uint8_t *rel_msg;
+    uint8_t *FW_cipher;
+    int ret = 0;
 
+    size = *((uint32_t *)FIRMWARE_SIZE_PTR);
+
+    uint8_t FW_plaintext [size];
+    // Get keyf from eeprom
+    EEPROMRead(keyf, EEPROM_KEYF_ADDRESS, AES_KEY_LEN);
+    // gcm_initialize();
+
+    FW_cipher = (uint8_t *)FIRMWARE_STORAGE_PTR;
     // Acknowledge the host
     uart_writeb(HOST_UART, 'B');
 
-    // Find the metadata
-    size = *((uint32_t *)FIRMWARE_SIZE_PTR);
+    if (!verify_FW_cipher(size, FW_cipher, FW_plaintext, &(boot_meta.IVf), &(boot_meta.tagf)))
+    {
+        uart_writeb(HOST_UART, 'X');
+        return;
+    }
 
     // Copy the firmware into the Boot RAM section
     for (i = 0; i < size; i++) {
-        *((uint8_t *)(FIRMWARE_BOOT_PTR + i)) = *((uint8_t *)(FIRMWARE_STORAGE_PTR + i));
+        *((uint8_t *)(FIRMWARE_BOOT_PTR + i)) = FW_plaintext[i];
     }
 
     uart_writeb(HOST_UART, 'M');
@@ -159,6 +172,7 @@ void load_data_original(uint32_t interface, uint32_t dst, uint32_t size)
 void load_verified_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size)
 {
     int i;
+    uint32_t indx = 0;
     uint32_t frame_size;
     uint8_t page_buffer[FLASH_PAGE_SIZE];
 
@@ -166,7 +180,8 @@ void load_verified_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size)
         // calculate frame size
         frame_size = size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : size;
         
-        memcpy(page_buffer, source, frame_size);
+        memcpy(page_buffer, &source[indx], frame_size);
+        indx += frame_size;
         // pad buffer if frame is smaller than the page
         for(i = frame_size; i < FLASH_PAGE_SIZE; i++) {
             page_buffer[i] = 0xFF;
@@ -349,6 +364,8 @@ void handle_update(void)
     
     // Retrieve firmware
     handle_FW_verification_response(&fw_meta);
+    memcpy(&boot_meta.IVf, &fw_meta.IVf, IV_SIZE);
+    memcpy(&boot_meta.tagf, &fw_meta.tagf, TAG_SIZE);
 }
 
 
