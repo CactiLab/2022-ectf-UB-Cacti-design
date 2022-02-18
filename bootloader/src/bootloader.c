@@ -64,10 +64,6 @@ void handle_boot(void)
 
     uint8_t FW_plaintext [size];
     uint8_t cfg_plaintext [cfg_size];
-    // Get keyf from eeprom
-  //  EEPROMRead(keyf, EEPROM_KEYF_ADDRESS, AES_KEY_LEN);
-    //EEPROMRead(keyc, EEPROM_KEYC_ADDRESS, AES_KEY_LEN);
-    // gcm_initialize();
 
     FW_cipher = (uint8_t *)FIRMWARE_STORAGE_PTR;
     CFG_cipher = (uint8_t *)CONFIGURATION_STORAGE_PTR;
@@ -154,32 +150,6 @@ void handle_readback(void)
  * @param dst is the starting page address to store the data.
  * @param size is the number of bytes to load.
  */
-// void load_data_original(uint32_t interface, uint32_t dst, uint32_t size)
-// {
-//     int i;
-//     uint32_t frame_size;
-//     uint8_t page_buffer[FLASH_PAGE_SIZE];
-
-//     while(size > 0) {
-//         // calculate frame size
-//         frame_size = size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : size;
-//         // read frame into buffer
-//         uart_read(HOST_UART, page_buffer, frame_size);
-//         // pad buffer if frame is smaller than the page
-//         for(i = frame_size; i < FLASH_PAGE_SIZE; i++) {
-//             page_buffer[i] = 0xFF;
-//         }
-//         // clear flash page
-//         flash_erase_page(dst);
-//         // write flash page
-//         flash_write((uint32_t *)page_buffer, dst, FLASH_PAGE_SIZE >> 2);
-//         // next page and decrease size
-//         dst += FLASH_PAGE_SIZE;
-//         size -= frame_size;
-//         // send frame ok
-//         uart_writeb(HOST_UART, FRAME_OK);
-//     }
-// }
 
 void load_verified_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size)
 {

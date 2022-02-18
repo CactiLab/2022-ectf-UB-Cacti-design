@@ -50,11 +50,7 @@
 #define FW_META_INFO (FW_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE)
 #define CFG_META_INFO (CFG_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE)
 #define MAX_RELEASE_MESSAGE_SIZE 1025
-// #define FW_META_INFO 12
-// The key values will be populated from EEPROM data
-// uint8_t keyv[AES_KEY_LEN];
-// uint8_t keyf[AES_KEY_LEN];
-// uint8_t keyc[AES_KEY_LEN];
+
 
 typedef struct __attribute__((packed))
 {
