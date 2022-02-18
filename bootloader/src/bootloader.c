@@ -415,14 +415,13 @@ bool check_CFG_magic(protected_cfg_format *cfg_meta)
  */
 void handle_configure(void)
 {
-    uint32_t size = 0;
-    cfg_boot_meta_data cfg_meta_data;
+    protected_cfg_format cfg_meta;
     // Acknowledge the host
     uart_writeb(HOST_UART, 'C');
 
-    uart_read(HOST_UART, &cfg_meta_data, CFG_META_INFO); /*READ 35 Bytes: MAGIC(3) +  FW_SIZE(4) + IVF(12) + tagv(16)*/
+    uart_read(HOST_UART, &cfg_meta, CFG_META_INFO); /*READ 35 Bytes: MAGIC(3) +  FW_SIZE(4) + IVF(12) + tagv(16)*/
     
-    if (!check_CFG_magic(&cfg_meta_data))
+    if (!check_CFG_magic(&cfg_meta))
     {
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
@@ -437,15 +436,15 @@ void handle_configure(void)
     // size |= ((uint32_t)uart_readb(HOST_UART));
 
     flash_erase_page(CONFIGURATION_METADATA_PTR);
-    flash_write_word(size, CONFIGURATION_SIZE_PTR);
+    flash_write_word(cfg_meta.CFG_size, CONFIGURATION_SIZE_PTR);
 
     // uart_writeb(HOST_UART, FRAME_OK);
     
     // Retrieve configuration
-    handle_CFG_verification_response(&cfg_meta_data);
+    handle_CFG_verification_response(&cfg_meta);
     // load_data_original(HOST_UART, CONFIGURATION_STORAGE_PTR, size);
-    memcpy(&cfg_boot_meta.IVc, &cfg_meta_data.IVc, IV_SIZE);
-    memcpy(&cfg_boot_meta.tagc, &cfg_meta_data.tagc, TAG_SIZE);
+    memcpy(&cfg_boot_meta.IVc, &cfg_meta.IVc, IV_SIZE);
+    memcpy(&cfg_boot_meta.tagc, &cfg_meta.tagc, TAG_SIZE);
     uart_writeb(HOST_UART, FRAME_OK); /*remove this later*/
 
 }
