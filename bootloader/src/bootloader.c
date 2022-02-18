@@ -86,7 +86,7 @@ void handle_boot(void)
         *((uint8_t *)(FIRMWARE_BOOT_PTR + i)) = FW_plaintext[i];
     }
     //write cfg data as plain text
-    memcpy(CFG_cipher, CFG_cipher, cfg_size);
+    memcpy(CFG_cipher, cfg_plaintext, cfg_size);
 
     uart_writeb(HOST_UART, 'M');
 
