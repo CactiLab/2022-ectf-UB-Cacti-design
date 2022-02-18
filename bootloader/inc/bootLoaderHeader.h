@@ -52,9 +52,9 @@
 #define MAX_RELEASE_MESSAGE_SIZE 1025
 // #define FW_META_INFO 12
 // The key values will be populated from EEPROM data
-uint8_t keyv[AES_KEY_LEN];
-uint8_t keyf[AES_KEY_LEN];
-uint8_t keyc[AES_KEY_LEN];
+// uint8_t keyv[AES_KEY_LEN];
+// uint8_t keyf[AES_KEY_LEN];
+// uint8_t keyc[AES_KEY_LEN];
 
 typedef struct __attribute__((packed))
 {
@@ -94,7 +94,7 @@ void handle_boot(void);
 void handle_readback(void);
 // void load_data_original(uint32_t interface, uint32_t dst, uint32_t size);
 void load_verified_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size);
-bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint8_t *key, uint32_t key_address);
+bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint32_t key_address);
 void handle_FW_verification_response(protected_fw_format *fw_meta);
 bool check_FW_magic(protected_fw_format *fw_meta);
 bool check_CFG_magic(protected_cfg_format *cfg_meta);
