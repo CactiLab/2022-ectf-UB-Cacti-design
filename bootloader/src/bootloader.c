@@ -79,9 +79,9 @@ void handle_boot(void)
         uart_writeb(HOST_UART, 'X');
         return;
     }
-    if (!verify_saffire_cipher(size, CFG_cipher, cfg_plaintext, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
+    if (!verify_saffire_cipher(cfg_size, CFG_cipher, cfg_plaintext, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
     {
-        uart_writeb(HOST_UART, 'X');
+        uart_writeb(HOST_UART, 'Y');
         return;
     }
 
