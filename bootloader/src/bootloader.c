@@ -71,6 +71,7 @@ void handle_boot(void)
 
     if (!verify_saffire_cipher(size, FW_cipher, FW_plaintext, &(boot_meta.IVf), &(boot_meta.tagf), keyf, (uint32_t)EEPROM_KEYF_ADDRESS))
     {
+        memset(keyf, 0, AES_KEY_LEN);
         uart_writeb(HOST_UART, 'X');
         return;
     }
@@ -221,6 +222,7 @@ void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
     if (verify_saffire_cipher(cfg_meta->CFG_size, cfg_cipher, cfg_plaintext, &(cfg_meta->IVc), &(cfg_meta->tagc), keyc, (uint32_t)EEPROM_KEYC_ADDRESS))
     {
         memset(cfg_plaintext, 0, cfg_meta->CFG_size);
+        memset(keyc, 0, AES_KEY_LEN);
         load_verified_data_on_flash(cfg_cipher, CONFIGURATION_STORAGE_PTR, cfg_meta->CFG_size);
         uart_writeb(HOST_UART, FRAME_OK);
     }
@@ -237,9 +239,7 @@ bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, u
     // Get keyf from eeprom
     EEPROMRead(key, key_address, AES_KEY_LEN);
     // gcm_initialize();
-    ret = aes_gcm_decrypt_auth(plaintext, cipher, size, keyf, AES_KEY_LEN, IV, IV_SIZE, tag, TAG_SIZE);
-
-    memset(keyf, 0, AES_KEY_LEN);
+    ret = aes_gcm_decrypt_auth(plaintext, cipher, size, key, AES_KEY_LEN, IV, IV_SIZE, tag, TAG_SIZE);
 
     if (ret != 0)
     {
@@ -273,6 +273,7 @@ void handle_FW_verification_response(protected_fw_format *fw_meta)
     if (verify_saffire_cipher(fw_meta->FW_size, FW_cipher, FW_plaintext, &(fw_meta->IVf), &(fw_meta->tagf), keyf, (uint32_t)EEPROM_KEYF_ADDRESS))
     {
         memset(FW_plaintext, 0, fw_meta->FW_size);
+        memset(keyf, 0, AES_KEY_LEN);
         load_verified_data_on_flash(FW_cipher, FIRMWARE_STORAGE_PTR, fw_meta->FW_size);
         uart_writeb(HOST_UART, FRAME_OK);
     }
