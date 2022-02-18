@@ -31,18 +31,18 @@ def encrypt_cfg_data(ivc, cfg_data):
         with open(cfg_key_path, "rb") as file:
             # Print the success message
             key_c = file.read()
-            log.info("KEY c: ")
-            log.info(key_c.hex())
-            log.info("KEY IVc: ")
-            log.info(ivc.hex())
-            log.info("cfg_data:")
-            log.info(cfg_data.hex())
+            # log.info("KEY c: ")
+            # log.info(key_c.hex())
+            # log.info("KEY IVc: ")
+            # log.info(ivc.hex())
+            # log.info("cfg_data:")
+            # log.info(cfg_data.hex())
             cipher = AES.new(key_c, AES.MODE_GCM, nonce=ivc)
             cfg_ciphertext, tagc = cipher.encrypt_and_digest(cfg_data)
-            log.info("cfg_data cipher:")
-            log.info(cfg_ciphertext.hex())
-            log.info("cfg tag:")
-            log.info(tagc.hex())
+            # log.info("cfg_data cipher:")
+            # log.info(cfg_ciphertext.hex())
+            # log.info("cfg tag:")
+            # log.info(tagc.hex())
             return cfg_ciphertext, tagc
     # Raise error if the file is opened before
     except IOError:
@@ -56,8 +56,8 @@ def protect_configuration(raw_cfg: Path, protected_cfg: Path):
     log.info("Reading configuration data...")
     file_data = raw_cfg.read_bytes()
     cfg_len = len(file_data)
-    log.info("CFG len")
-    log.info(cfg_len)
+    # log.info("CFG len")
+    # log.info(cfg_len)
     ivc =  os.urandom(IV_SIZE)
     cfg_ciphertext, tagc = encrypt_cfg_data(ivc, file_data)
 
