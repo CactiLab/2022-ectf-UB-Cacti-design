@@ -405,7 +405,7 @@ void handle_update(void)
 
 bool check_CFG_magic(protected_cfg_format *cfg_meta)
 {
-    if (cfg_meta->CFG_magic[0] == 'C' && cfg_meta->CFG_magic[1] == 'F' && cfg_meta->CFG_magic[3] == 'G')
+    if (cfg_meta->CFG_magic[0] == 'C' && cfg_meta->CFG_magic[1] == 'F' && cfg_meta->CFG_magic[2] == 'G')
         return true;
     return false;
 }
