@@ -69,7 +69,7 @@ void handle_boot(void)
     // Acknowledge the host
     uart_writeb(HOST_UART, 'B');
 
-    if (!verify_FW_cipher(size, FW_cipher, FW_plaintext, &(boot_meta.IVf), &(boot_meta.tagf)))
+    if (!verify_saffire_cipher(size, FW_cipher, FW_plaintext, &(boot_meta.IVf), &(boot_meta.tagf), keyf, (uint32_t)EEPROM_KEYF_ADDRESS))
     {
         uart_writeb(HOST_UART, 'X');
         return;
@@ -142,32 +142,32 @@ void handle_readback(void)
  * @param dst is the starting page address to store the data.
  * @param size is the number of bytes to load.
  */
-void load_data_original(uint32_t interface, uint32_t dst, uint32_t size)
-{
-    int i;
-    uint32_t frame_size;
-    uint8_t page_buffer[FLASH_PAGE_SIZE];
+// void load_data_original(uint32_t interface, uint32_t dst, uint32_t size)
+// {
+//     int i;
+//     uint32_t frame_size;
+//     uint8_t page_buffer[FLASH_PAGE_SIZE];
 
-    while(size > 0) {
-        // calculate frame size
-        frame_size = size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : size;
-        // read frame into buffer
-        uart_read(HOST_UART, page_buffer, frame_size);
-        // pad buffer if frame is smaller than the page
-        for(i = frame_size; i < FLASH_PAGE_SIZE; i++) {
-            page_buffer[i] = 0xFF;
-        }
-        // clear flash page
-        flash_erase_page(dst);
-        // write flash page
-        flash_write((uint32_t *)page_buffer, dst, FLASH_PAGE_SIZE >> 2);
-        // next page and decrease size
-        dst += FLASH_PAGE_SIZE;
-        size -= frame_size;
-        // send frame ok
-        uart_writeb(HOST_UART, FRAME_OK);
-    }
-}
+//     while(size > 0) {
+//         // calculate frame size
+//         frame_size = size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : size;
+//         // read frame into buffer
+//         uart_read(HOST_UART, page_buffer, frame_size);
+//         // pad buffer if frame is smaller than the page
+//         for(i = frame_size; i < FLASH_PAGE_SIZE; i++) {
+//             page_buffer[i] = 0xFF;
+//         }
+//         // clear flash page
+//         flash_erase_page(dst);
+//         // write flash page
+//         flash_write((uint32_t *)page_buffer, dst, FLASH_PAGE_SIZE >> 2);
+//         // next page and decrease size
+//         dst += FLASH_PAGE_SIZE;
+//         size -= frame_size;
+//         // send frame ok
+//         uart_writeb(HOST_UART, FRAME_OK);
+//     }
+// }
 
 void load_verified_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size)
 {
@@ -196,14 +196,48 @@ void load_verified_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size)
     }
 }
 
+void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
+{
+    int i;
+    uint32_t frame_size, current_indx = 0;
+    uint32_t c_size = cfg_meta->CFG_size;
+    uint8_t cfg_plaintext[c_size];
+    uint8_t cfg_cipher[c_size];
+    uint8_t page_buffer[FLASH_PAGE_SIZE];
 
-bool verify_FW_cipher(uint32_t size, uint8_t *cipher, uint8_t *FW_plaintext, uint8_t *IVf, uint8_t *tagf)
+    while(c_size > 0) 
+    {
+        // calculate frame size
+        frame_size = c_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : c_size;
+        // read frame into buffer
+        uart_read(HOST_UART, page_buffer, frame_size);
+        memcpy(&cfg_cipher[current_indx], page_buffer, frame_size);
+        c_size -= frame_size;
+        current_indx += frame_size;
+        // send frame ok
+        uart_writeb(HOST_UART, FRAME_OK);
+    }
+    //read encrypted cfg cipher
+    if (verify_saffire_cipher(cfg_meta->CFG_size, cfg_cipher, cfg_plaintext, &(cfg_meta->IVc), &(cfg_meta->tagc), keyc, (uint32_t)EEPROM_KEYC_ADDRESS))
+    {
+        memset(cfg_plaintext, 0, cfg_meta->CFG_size);
+        load_verified_data_on_flash(cfg_cipher, CONFIGURATION_STORAGE_PTR, cfg_meta->CFG_size);
+        uart_writeb(HOST_UART, FRAME_OK);
+    }
+    else
+    {
+        /*configuration data verification failed notification*/
+        uart_writeb(HOST_UART, FRAME_BAD);
+    }
+}
+
+bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint8_t *key, uint32_t key_address)
 {
     int ret = 0;
     // Get keyf from eeprom
-    EEPROMRead(keyf, EEPROM_KEYF_ADDRESS, AES_KEY_LEN);
+    EEPROMRead(key, key_address, AES_KEY_LEN);
     // gcm_initialize();
-    ret = aes_gcm_decrypt_auth(FW_plaintext, cipher, size, keyf, AES_KEY_LEN, IVf, IV_SIZE, tagf, TAG_SIZE);
+    ret = aes_gcm_decrypt_auth(plaintext, cipher, size, keyf, AES_KEY_LEN, IV, IV_SIZE, tag, TAG_SIZE);
 
     memset(keyf, 0, AES_KEY_LEN);
 
@@ -236,11 +270,11 @@ void handle_FW_verification_response(protected_fw_format *fw_meta)
         uart_writeb(HOST_UART, FRAME_OK);
     }
     //read encrypted fw cipher
-    if (verify_FW_cipher(fw_meta->FW_size, FW_cipher, FW_plaintext, &(fw_meta->IVf), &(fw_meta->tagf)))
+    if (verify_saffire_cipher(fw_meta->FW_size, FW_cipher, FW_plaintext, &(fw_meta->IVf), &(fw_meta->tagf), keyf, (uint32_t)EEPROM_KEYF_ADDRESS))
     {
-        memset(FW_plaintext, 0, VERSION_CIPHER_SIZE);
-        uart_writeb(HOST_UART, FRAME_OK);
+        memset(FW_plaintext, 0, fw_meta->FW_size);
         load_verified_data_on_flash(FW_cipher, FIRMWARE_STORAGE_PTR, fw_meta->FW_size);
+        uart_writeb(HOST_UART, FRAME_OK);
     }
     else
     {
@@ -369,29 +403,49 @@ void handle_update(void)
 }
 
 
+bool check_CFG_magic(protected_cfg_format *cfg_meta)
+{
+    if (cfg_meta->CFG_magic[0] == 'C' && cfg_meta->CFG_magic[1] == 'F' && cfg_meta->CFG_magic[3] == 'G')
+        return true;
+    return false;
+}
+
 /**
  * @brief Load configuration data.
  */
 void handle_configure(void)
 {
     uint32_t size = 0;
-
+    cfg_boot_meta_data cfg_meta_data;
     // Acknowledge the host
     uart_writeb(HOST_UART, 'C');
 
-    // Receive size
-    size = (((uint32_t)uart_readb(HOST_UART)) << 24);
-    size |= (((uint32_t)uart_readb(HOST_UART)) << 16);
-    size |= (((uint32_t)uart_readb(HOST_UART)) << 8);
-    size |= ((uint32_t)uart_readb(HOST_UART));
+    uart_read(HOST_UART, &cfg_meta_data, CFG_META_INFO); /*READ 35 Bytes: MAGIC(3) +  FW_SIZE(4) + IVF(12) + tagv(16)*/
+    
+    if (!check_CFG_magic(&cfg_meta_data))
+    {
+        uart_writeb(HOST_UART, FRAME_BAD);
+        return;
+    }
+     //Acknowledge magic number verification
+    uart_writeb(HOST_UART, FRAME_OK);
+
+    // // Receive size
+    // size = (((uint32_t)uart_readb(HOST_UART)) << 24);
+    // size |= (((uint32_t)uart_readb(HOST_UART)) << 16);
+    // size |= (((uint32_t)uart_readb(HOST_UART)) << 8);
+    // size |= ((uint32_t)uart_readb(HOST_UART));
 
     flash_erase_page(CONFIGURATION_METADATA_PTR);
     flash_write_word(size, CONFIGURATION_SIZE_PTR);
 
-    uart_writeb(HOST_UART, FRAME_OK);
+    // uart_writeb(HOST_UART, FRAME_OK);
     
     // Retrieve configuration
-    load_data_original(HOST_UART, CONFIGURATION_STORAGE_PTR, size);
+    handle_CFG_verification_response(&cfg_meta_data);
+    // load_data_original(HOST_UART, CONFIGURATION_STORAGE_PTR, size);
+    memcpy(&cfg_boot_meta.IVc, &cfg_meta_data.IVc, IV_SIZE);
+    memcpy(&cfg_boot_meta.tagc, &cfg_meta_data.tagc, TAG_SIZE);
     uart_writeb(HOST_UART, FRAME_OK); /*remove this later*/
 
 }

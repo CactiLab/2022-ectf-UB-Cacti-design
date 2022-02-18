@@ -18,6 +18,7 @@ LOG_FORMAT = "%(asctime)s:%(name)-12s%(levelname)-8s %(message)s"
 log = logging.getLogger(Path(__file__).name)
 
 CONFIGURATION_ROOT = Path("/configuration")
+# CONFIGURATION_ROOT = Path("/home/tomal/Desktop/projects/eCTF22/2022-ectf-UB-Cacti-design/configuration")
 FIRMWARE_ROOT = Path("/firmware")
 # FIRMWARE_ROOT = Path("/home/tomal/Desktop/projects/eCTF22/2022-ectf-UB-Cacti-design/firmware")
 RELEASE_MESSAGES_ROOT = Path("/messages")

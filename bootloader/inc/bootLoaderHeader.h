@@ -48,6 +48,7 @@
 #define VERSION_CIPHER_SIZE 20
 #define AES_KEY_LEN 32
 #define FW_META_INFO (FW_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE)
+#define CFG_META_INFO (CFG_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE)
 #define MAX_RELEASE_MESSAGE_SIZE 1025
 // #define FW_META_INFO 12
 // The key values will be populated from EEPROM data
@@ -65,6 +66,19 @@ typedef struct __attribute__((packed))
   uint8_t tagf[TAG_SIZE];
 } protected_fw_format;
 
+typedef struct __attribute__((packed))
+{
+  uint8_t CFG_magic[CFG_MAGIC_LEN]; // 3 bytes
+  uint32_t CFG_size; // 4 bytes (3 + 4)
+  uint8_t IVc[IV_SIZE]; // 12 bytes -> 19
+  uint8_t tagc[TAG_SIZE]; // 16 bytes -> 35
+} protected_cfg_format;
+
+typedef struct __attribute__((packed))
+{
+  uint8_t IVc[IV_SIZE]; // 12 bytes -> 18
+  uint8_t tagc[TAG_SIZE];
+} cfg_boot_meta_data;
 
 typedef struct __attribute__((packed))
 {
@@ -73,16 +87,19 @@ typedef struct __attribute__((packed))
 } fw_boot_meta_data;
 
 fw_boot_meta_data boot_meta;
+cfg_boot_meta_data cfg_boot_meta;
 //FUNCTIONS in bootloader.c
 
 void handle_boot(void);
 void handle_readback(void);
-void load_data_original(uint32_t interface, uint32_t dst, uint32_t size);
+// void load_data_original(uint32_t interface, uint32_t dst, uint32_t size);
 void load_verified_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size);
-bool verify_FW_cipher(uint32_t size, uint8_t *cipher, uint8_t *FW_plaintext, uint8_t *IVf, uint8_t *tagf);
+bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint8_t *key, uint32_t key_address);
 void handle_FW_verification_response(protected_fw_format *fw_meta);
 bool check_FW_magic(protected_fw_format *fw_meta);
+bool check_CFG_magic(protected_cfg_format *cfg_meta);
 void handle_update(void);
 void handle_configure(void);
+void handle_CFG_verification_response(protected_cfg_format *cfg_meta);
 
 #endif

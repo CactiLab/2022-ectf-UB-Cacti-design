@@ -12,19 +12,17 @@
 # Use this code at your own risk!
 
 import argparse
-import json
 import logging
 from pathlib import Path
 from Crypto.Cipher import AES
 import struct
-import random, string, os
+import os
 from util import print_banner, FIRMWARE_ROOT, LOG_FORMAT
 
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 log = logging.getLogger(Path(__file__).name)
 
 FW_MAGIC = b'FW'
-CFG_MAGIC = b'CFG'
 IV_SIZE = 12
 fimrware_key_path = "/secrets/keyf.bin"
 version_number_key_path = "/secrets/keyv.bin"

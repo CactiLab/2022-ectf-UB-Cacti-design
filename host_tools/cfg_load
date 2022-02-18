@@ -22,6 +22,7 @@ from util import print_banner, send_packets, RESP_OK, CONFIGURATION_ROOT, LOG_FO
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 log = logging.getLogger(Path(__file__).name)
 
+CFG_META_INFO_SIZE = 35
 
 def load_configuration(socket_number: int, config_file: Path):
     print_banner("SAFFIRe Configuration Tool")
@@ -44,15 +45,21 @@ def load_configuration(socket_number: int, config_file: Path):
             pass
 
         # Send the size
-        log.info("Sending the size...")
-        payload = struct.pack(">I", size)
-        sock.send(payload)
+        log.info("Sending Magic, size, IVc, tagc...")
+        cfg_meta = configuration[0 : CFG_META_INFO_SIZE]
+        cfg_cipher = configuration[CFG_META_INFO_SIZE : ]
+
+        sock.send(cfg_meta)
         response = sock.recv(1)
+
         if response != RESP_OK:
             exit(f"ERROR: Bootloader responded with {repr(response)}")
-
+        else:
+            log.info("Configuration magic verification succes!!")
+        
+        log.info("Sending configuration ciphertext...")
         # Send packets
-        send_packets(sock, configuration)
+        send_packets(sock, cfg_cipher)
 
         log.info("Firmware configured\n")
 
