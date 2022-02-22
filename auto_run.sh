@@ -15,6 +15,14 @@ echo $UART_SOCK
 
 docker volume create $SYS_NAME-flash.vol
 docker volume create $SYS_NAME-eeprom.vol
+docker volume create $SYS_NAME-secrets.vol
+
+if [ -d "socks" ]; then
+    echo "recreate socks folder..." 
+    rm -rf socks
+#     mkdir socks
+#     echo "create socks folder.."
+fi
 
 # 1. Building the Deployment
 # echo ""
@@ -25,19 +33,12 @@ python3 tools/run_saffire.py build-system --emulated \
 # 2. Launch the Bootloader
 python3 tools/run_saffire.py load-device --emulated --sysname $SYS_NAME
 
-if [ -d "socks" ]; then
-    echo "recreate socks folder..." 
-    rm -rf socks
-    mkdir socks
-    echo "create socks folder.."
-fi
-
 python3 tools/run_saffire.py launch-bootloader --emulated  \
     --sysname $SYS_NAME \
     --sock-root socks/ \
     --uart-sock $UART_SOCK
 
-# # 3. Protect the SAFFIRe Files
+# 3. Protect the SAFFIRe Files
 python3 tools/run_saffire.py fw-protect --emulated \
      --sysname $SYS_NAME \
      --fw-root firmware/ \
@@ -74,15 +75,15 @@ python3 tools/run_saffire.py cfg-readback --emulated \
      --rb-len 100
 
 # # 6. Boot firmware
-# python3 tools/run_saffire.py boot --emulated \
-#     --sysname $SYS_NAME \
-#     --uart-sock $UART_SOCK \
-#     --boot-msg-file boot.txt
-# python3 tools/run_saffire.py monitor --emulated \
-#     --sysname $SYS_NAME \
-#     --uart-sock $UART_SOCK \
-#     --boot-msg-file boot.txt
+python3 tools/run_saffire.py boot --emulated \
+    --sysname $SYS_NAME \
+    --uart-sock $UART_SOCK \
+    --boot-msg-file boot.txt
+python3 tools/run_saffire.py monitor --emulated \
+    --sysname $SYS_NAME \
+    --uart-sock $UART_SOCK \
+    --boot-msg-file boot.txt
 
 # # 7. Shutting Down the Bootloader
-# python3 tools/run_saffire.py kill-system --emulated --sysname $SYS_NAME
+python3 tools/run_saffire.py kill-system --emulated --sysname $SYS_NAME
 

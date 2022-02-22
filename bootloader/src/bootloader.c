@@ -20,13 +20,13 @@
 #include "flash.h"
 #include "uart.h"
 #include "aes-gcm.h"
+#include "mpu.h"
 
 #include "bootLoaderHeader.h"
 // this will run if EXAMPLE_AES is defined in the Makefile (see line 54)
 #ifdef EXAMPLE_AES
 #include "aes.h"
 #endif
-
 
 /**
  * @brief Boot the firmware.
@@ -469,6 +469,9 @@ int main(void) {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
     uint8_t inItRet = EEPROMInit();
     gcm_initialize();
+    #ifdef MPU_ENABLED
+    mpu_init();
+    #endif
     // Handle host commands
     while (1) {
         cmd = uart_readb(HOST_UART);
