@@ -113,7 +113,7 @@ void handle_readback(void)
     uint8_t *address;
     uint32_t size = 0;
 #ifdef MPU_ENABLED
-    uint8_t mpu_change_ap_flag = 0;
+    uint32_t mpu_change_ap_flag = 0;
 #endif
 
     // Acknowledge the host
@@ -124,10 +124,10 @@ void handle_readback(void)
 
     if (region == 'F')
     {
-// #ifdef MPU_ENABLED
-//         mpu_change_ap_flag = 13;
-//         mpu_change_ap(3);
-// #endif
+#ifdef MPU_ENABLED
+        mpu_change_ap_flag = 3;
+        MPURegionEnable(3);
+#endif
         // Set the base address for the readback
         address = (uint8_t *)FIRMWARE_STORAGE_PTR;
         // Acknowledge the host
@@ -135,10 +135,10 @@ void handle_readback(void)
     }
     else if (region == 'C')
     {
-// #ifdef MPU_ENABLED
-//         mpu_change_ap_flag = 14;
-//         mpu_change_ap(4);
-// #endif
+#ifdef MPU_ENABLED
+        mpu_change_ap_flag = 4;
+        MPURegionEnable(4);
+#endif
         // Set the base address for the readback
         address = (uint8_t *)CONFIGURATION_STORAGE_PTR;
         // Acknowledge the hose
@@ -146,6 +146,7 @@ void handle_readback(void)
     }
     else
     {
+        mpu_change_ap_flag = 0;
         return;
     }
 
@@ -157,9 +158,10 @@ void handle_readback(void)
 
     // Read out the memory
     uart_write(HOST_UART, address, size);
-// #ifdef MPU_ENABLED
-//     mpu_change_ap(mpu_change_ap_flag);
-// #endif
+#ifdef MPU_ENABLED
+    if (mpu_change_ap_flag != 0)
+        MPURegionDisable(mpu_change_ap_flag);
+#endif
 }
 
 /**
@@ -507,38 +509,36 @@ int main(void)
         {
         case 'C':
 #ifdef MPU_ENABLED
-            mpu_change_ap(4);
+            MPURegionEnable(4);
 #endif
             handle_configure();
 #ifdef MPU_ENABLED
-            mpu_change_ap(14);
+            MPURegionDisable(4);
 #endif
             break;
         case 'U':
 #ifdef MPU_ENABLED
-            mpu_change_ap(3);
+            MPURegionEnable(3);
 #endif
             handle_update();
 #ifdef MPU_ENABLED
-            mpu_change_ap(13);
+            MPURegionDisable(3);
 #endif
             break;
         case 'R':
-#ifdef MPU_ENABLED
-            mpu_change_ap(34);
-#endif
             handle_readback();
-#ifdef MPU_ENABLED
-            mpu_change_ap(134);
-#endif
             break;
         case 'B':
 #ifdef MPU_ENABLED
-            mpu_change_ap(5);
+            MPURegionEnable(3);
+            MPURegionEnable(4);
+            MPURegionEnable(5);
 #endif
             handle_boot();
 #ifdef MPU_ENABLED
-            mpu_change_ap(15);
+            MPURegionDisable(3);
+            MPURegionDisable(4);
+            MPURegionDisable(5);
 #endif
             break;
         default:
