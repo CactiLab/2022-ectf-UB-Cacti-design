@@ -37,7 +37,7 @@ CFLAGS+=-DOLDEST_VERSION=${OLDEST_VERSION}
 all: ${COMPILER}
 
 # this must be the last build rule of `all`
-all: ${COMPILER}/aes.o ${COMPILER}/aes-gcm.o ${COMPILER}/gcm.o ${COMPILER}/mpu.o ${COMPILER}/bootloader.axf
+all: ${COMPILER}/aes.o ${COMPILER}/aes-gcm.o ${COMPILER}/gcm.o ${COMPILER}/bootloader.axf
 
 
 ################ start crypto example ################
@@ -113,7 +113,7 @@ arg_check:
 # Check arguments
 ${COMPILER}/bootloader.axf: arg_check
 ${COMPILER}/bootloader.axf: ${COMPILER}/flash.o
-${COMPILER}/bootloader.axf: ${COMPILER}/mpu.o
+${COMPILER}/bootloader.axf: ${COMPILER}/mpu_init.o
 ${COMPILER}/bootloader.axf: ${COMPILER}/uart.o
 ${COMPILER}/bootloader.axf: ${COMPILER}/bootloader.o
 ${COMPILER}/bootloader.axf: ${COMPILER}/startup_${COMPILER}.o

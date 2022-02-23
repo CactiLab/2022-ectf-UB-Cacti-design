@@ -3,11 +3,11 @@
  * @author Kyle Scaplen
  * @brief Bootloader implementation
  * @date 2022
- * 
+ *
  * This source file is part of an example system for MITRE's 2022 Embedded System CTF (eCTF).
  * This code is being provided only for educational purposes for the 2022 MITRE eCTF competition,
  * and may not meet MITRE standards for quality. Use this code at your own risk!
- * 
+ *
  * @copyright Copyright (c) 2022 The MITRE Corporation
  */
 
@@ -20,7 +20,6 @@
 #include "flash.h"
 #include "uart.h"
 #include "aes-gcm.h"
-#include "mpu.h"
 
 #include "bootLoaderHeader.h"
 // this will run if EXAMPLE_AES is defined in the Makefile (see line 54)
@@ -35,10 +34,10 @@
 void eeprom_data_handling()
 {
     uint8_t eeprom_read[EEPROM_BLOCK_SIZE];
-    //uint32_t eeprom_size = EEPROMSizeGet();
-    //uint32_t block_count =  EEPROMBlockCountGet();
+    // uint32_t eeprom_size = EEPROMSizeGet();
+    // uint32_t block_count =  EEPROMBlockCountGet();
 
-    EEPROMRead(eeprom_read, 0x0, sizeof(eeprom_read)); /*EEPROM block hiding first block does not work*/
+    EEPROMRead(eeprom_read, 0x0, sizeof(eeprom_read));                        /*EEPROM block hiding first block does not work*/
     EEPROMRead(eeprom_read, BOOTLOADER_SECRET_DATA_PTR, sizeof(eeprom_read)); /*EEPROM block hiding*/
     memset(eeprom_read, 0, sizeof(eeprom_read));
     EEPROMBlockHide(EEPROM_SECRET_BLOCK_START);
@@ -51,7 +50,7 @@ void eeprom_data_handling()
 }
 
 void handle_boot(void)
-{    
+{
     uint32_t size, cfg_size;
     uint32_t i = 0;
     uint8_t *rel_msg;
@@ -62,8 +61,8 @@ void handle_boot(void)
     size = *((uint32_t *)FIRMWARE_SIZE_PTR);
     cfg_size = *((uint32_t *)CONFIGURATION_SIZE_PTR);
 
-    uint8_t FW_plaintext [size];
-    uint8_t cfg_plaintext [cfg_size];
+    uint8_t FW_plaintext[size];
+    uint8_t cfg_plaintext[cfg_size];
 
     FW_cipher = (uint8_t *)FIRMWARE_STORAGE_PTR;
     CFG_cipher = (uint8_t *)CONFIGURATION_STORAGE_PTR;
@@ -82,17 +81,19 @@ void handle_boot(void)
     }
 
     // Copy the firmware into the Boot RAM section
-    for (i = 0; i < size; i++) {
+    for (i = 0; i < size; i++)
+    {
         *((uint8_t *)(FIRMWARE_BOOT_PTR + i)) = FW_plaintext[i];
     }
-    //write cfg data as plain text
+    // write cfg data as plain text
     load_verified_data_on_flash(cfg_plaintext, CONFIGURATION_STORAGE_PTR, cfg_size);
 
     uart_writeb(HOST_UART, 'M');
 
     // Print the release message
     rel_msg = (uint8_t *)FIRMWARE_RELEASE_MSG_PTR;
-    while (*rel_msg != 0) {
+    while (*rel_msg != 0)
+    {
         uart_writeb(HOST_UART, *rel_msg);
         rel_msg++;
     }
@@ -103,7 +104,6 @@ void handle_boot(void)
     firmware();
 }
 
-
 /**
  * @brief Send the firmware data over the host interface.
  */
@@ -112,24 +112,40 @@ void handle_readback(void)
     uint8_t region;
     uint8_t *address;
     uint32_t size = 0;
-    
+#ifdef MPU_ENABLED
+    uint8_t mpu_change_ap_flag = 0;
+#endif
+
     // Acknowledge the host
     uart_writeb(HOST_UART, 'R');
 
     // Receive region identifier
     region = (uint32_t)uart_readb(HOST_UART);
 
-    if (region == 'F') {
+    if (region == 'F')
+    {
+// #ifdef MPU_ENABLED
+//         mpu_change_ap_flag = 13;
+//         mpu_change_ap(3);
+// #endif
         // Set the base address for the readback
         address = (uint8_t *)FIRMWARE_STORAGE_PTR;
         // Acknowledge the host
         uart_writeb(HOST_UART, 'F');
-    } else if (region == 'C') {
+    }
+    else if (region == 'C')
+    {
+// #ifdef MPU_ENABLED
+//         mpu_change_ap_flag = 14;
+//         mpu_change_ap(4);
+// #endif
         // Set the base address for the readback
         address = (uint8_t *)CONFIGURATION_STORAGE_PTR;
         // Acknowledge the hose
         uart_writeb(HOST_UART, 'C');
-    } else {
+    }
+    else
+    {
         return;
     }
 
@@ -141,11 +157,14 @@ void handle_readback(void)
 
     // Read out the memory
     uart_write(HOST_UART, address, size);
+// #ifdef MPU_ENABLED
+//     mpu_change_ap(mpu_change_ap_flag);
+// #endif
 }
 
 /**
  * @brief Read data from a UART interface and program to flash memory.
- * 
+ *
  * @param interface is the base address of the UART interface to read from.
  * @param dst is the starting page address to store the data.
  * @param size is the number of bytes to load.
@@ -158,14 +177,16 @@ void load_verified_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size)
     uint32_t frame_size;
     uint8_t page_buffer[FLASH_PAGE_SIZE];
 
-    while(size > 0) {
+    while (size > 0)
+    {
         // calculate frame size
         frame_size = size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : size;
-        
+
         memcpy(page_buffer, &source[indx], frame_size);
         indx += frame_size;
         // pad buffer if frame is smaller than the page
-        for(i = frame_size; i < FLASH_PAGE_SIZE; i++) {
+        for (i = frame_size; i < FLASH_PAGE_SIZE; i++)
+        {
             page_buffer[i] = 0xFF;
         }
         // clear flash page
@@ -187,7 +208,7 @@ void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
     uint8_t cfg_cipher[c_size];
     uint8_t page_buffer[FLASH_PAGE_SIZE];
 
-    while(c_size > 0) 
+    while (c_size > 0)
     {
         // calculate frame size
         frame_size = c_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : c_size;
@@ -199,7 +220,7 @@ void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
         // send frame ok
         uart_writeb(HOST_UART, FRAME_OK);
     }
-    //read encrypted cfg cipher
+    // read encrypted cfg cipher
     if (verify_saffire_cipher(cfg_meta->CFG_size, cfg_cipher, cfg_plaintext, &(cfg_meta->IVc), &(cfg_meta->tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
     {
         memset(cfg_plaintext, 0, cfg_meta->CFG_size);
@@ -227,7 +248,7 @@ bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, u
         // Authentication failure of version data
         return false;
     }
-    //Firmware data aunthentication success
+    // Firmware data aunthentication success
     return true;
 }
 void handle_FW_verification_response(protected_fw_format *fw_meta)
@@ -239,7 +260,8 @@ void handle_FW_verification_response(protected_fw_format *fw_meta)
     uint8_t FW_cipher[f_size];
     uint8_t page_buffer[FLASH_PAGE_SIZE];
 
-    while(f_size > 0) {
+    while (f_size > 0)
+    {
         // calculate frame size
         frame_size = f_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : f_size;
         // read frame into buffer
@@ -250,7 +272,7 @@ void handle_FW_verification_response(protected_fw_format *fw_meta)
         // send frame ok
         uart_writeb(HOST_UART, FRAME_OK);
     }
-    //read encrypted fw cipher
+    // read encrypted fw cipher
     if (verify_saffire_cipher(fw_meta->FW_size, FW_cipher, FW_plaintext, &(fw_meta->IVf), &(fw_meta->tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
     {
         memset(FW_plaintext, 0, fw_meta->FW_size);
@@ -275,7 +297,7 @@ bool check_FW_magic(protected_fw_format *fw_meta)
 void handle_update(void)
 {
     // metadata
-    int ret = 0;  
+    int ret = 0;
     uint32_t current_version;
     uint32_t rel_msg_size = 0;
     uint8_t rel_msg[MAX_RELEASE_MESSAGE_SIZE]; // 1024 + terminator
@@ -288,13 +310,13 @@ void handle_update(void)
 
     uart_read(HOST_UART, &fw_meta, FW_META_INFO); /*READ 34 Bytes: MAGIC(2) +  FW_SIZE(4) + IVF(12) + tagv(16)
 
-    /*STOP udpate if magic is wrong*/ 
+    /*STOP udpate if magic is wrong*/
     if (!check_FW_magic(&fw_meta))
     {
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
     }
-    //Acknowledge magic number verification
+    // Acknowledge magic number verification
     uart_writeb(HOST_UART, FRAME_OK);
     uart_read(HOST_UART, version_cipher_data, VERSION_CIPHER_SIZE);
 
@@ -305,34 +327,35 @@ void handle_update(void)
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
     }
-  //  ret = aes_gcm_decrypt_auth(output, version_cipher_data, VERSION_CIPHER_SIZE, keyv, AES_KEY_LEN, &fw_meta.IVf, IV_SIZE, &fw_meta.tagv, TAG_SIZE);
+    //  ret = aes_gcm_decrypt_auth(output, version_cipher_data, VERSION_CIPHER_SIZE, keyv, AES_KEY_LEN, &fw_meta.IVf, IV_SIZE, &fw_meta.tagv, TAG_SIZE);
 
     if (ret != 0)
     {
         // Authentication failure of version data
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
-
     }
-    //Clear the version number key
-    // memset(keyv, 0, AES_KEY_LEN);
+    // Clear the version number key
+    //  memset(keyv, 0, AES_KEY_LEN);
 
-    //Acknowledge version data verification success
+    // Acknowledge version data verification success
     uart_writeb(HOST_UART, FRAME_OK);
 
     memcpy((uint32_t)&fw_meta.version_number, output, sizeof(int));
-    memcpy(&fw_meta.tagf, &output[sizeof(int)] , VERSION_CIPHER_SIZE - sizeof(int));
+    memcpy(&fw_meta.tagf, &output[sizeof(int)], VERSION_CIPHER_SIZE - sizeof(int));
 
     // Receive release message
     rel_msg_size = uart_readline(HOST_UART, rel_msg) + 1; // Include terminator
-    
+
     // Check the version
     current_version = *((uint32_t *)FIRMWARE_VERSION_PTR);
-    if (current_version == 0xFFFFFFFF) {
+    if (current_version == 0xFFFFFFFF)
+    {
         current_version = (uint32_t)OLDEST_VERSION;
     }
 
-    if ((fw_meta.version_number != 0) && (fw_meta.version_number < current_version)) {
+    if ((fw_meta.version_number != 0) && (fw_meta.version_number < current_version))
+    {
         // Version is not acceptable
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
@@ -342,9 +365,12 @@ void handle_update(void)
     flash_erase_page(FIRMWARE_METADATA_PTR);
 
     // Only save new version if it is not 0
-    if (fw_meta.version_number != 0) {
+    if (fw_meta.version_number != 0)
+    {
         flash_write_word(fw_meta.version_number, FIRMWARE_VERSION_PTR);
-    } else {
+    }
+    else
+    {
         flash_write_word(current_version, FIRMWARE_VERSION_PTR);
     }
 
@@ -357,33 +383,34 @@ void handle_update(void)
     uint32_t rem_bytes = rel_msg_size;
 
     // If release message goes outside of the first page, write the first full page
-    if (rel_msg_size > (FLASH_PAGE_SIZE-8)) {
+    if (rel_msg_size > (FLASH_PAGE_SIZE - 8))
+    {
 
         // Write first page
-        flash_write((uint32_t *)rel_msg, FIRMWARE_RELEASE_MSG_PTR, (FLASH_PAGE_SIZE-8) >> 2); // This is always a multiple of 4
+        flash_write((uint32_t *)rel_msg, FIRMWARE_RELEASE_MSG_PTR, (FLASH_PAGE_SIZE - 8) >> 2); // This is always a multiple of 4
 
         // Set up second page
-        rem_bytes = rel_msg_size - (FLASH_PAGE_SIZE-8);
-        rel_msg_read_ptr = rel_msg + (FLASH_PAGE_SIZE-8);
+        rem_bytes = rel_msg_size - (FLASH_PAGE_SIZE - 8);
+        rel_msg_read_ptr = rel_msg + (FLASH_PAGE_SIZE - 8);
         rel_msg_write_ptr = FIRMWARE_RELEASE_MSG_PTR2;
         flash_erase_page(rel_msg_write_ptr);
     }
 
     // Program last or only page of release message
-    if (rem_bytes % 4 != 0) {
+    if (rem_bytes % 4 != 0)
+    {
         rem_bytes += 4 - (rem_bytes % 4); // Account for partial word
     }
     flash_write((uint32_t *)rel_msg_read_ptr, rel_msg_write_ptr, rem_bytes >> 2);
 
     // Acknowledge release message
     uart_writeb(HOST_UART, FRAME_OK);
-    
+
     // Retrieve firmware
     handle_FW_verification_response(&fw_meta);
     memcpy(&boot_meta.IVf, &fw_meta.IVf, IV_SIZE);
     memcpy(&boot_meta.tagf, &fw_meta.tagf, TAG_SIZE);
 }
-
 
 bool check_CFG_magic(protected_cfg_format *cfg_meta)
 {
@@ -402,13 +429,13 @@ void handle_configure(void)
     uart_writeb(HOST_UART, 'C');
 
     uart_read(HOST_UART, &cfg_meta, CFG_META_INFO); /*READ 35 Bytes: MAGIC(3) +  FW_SIZE(4) + IVF(12) + tagv(16)*/
-    
+
     if (!check_CFG_magic(&cfg_meta))
     {
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
     }
-     //Acknowledge magic number verification
+    // Acknowledge magic number verification
     uart_writeb(HOST_UART, FRAME_OK);
 
     // // Receive size
@@ -421,24 +448,23 @@ void handle_configure(void)
     flash_write_word(cfg_meta.CFG_size, CONFIGURATION_SIZE_PTR);
 
     // uart_writeb(HOST_UART, FRAME_OK);
-    
+
     // Retrieve configuration
     handle_CFG_verification_response(&cfg_meta);
     // load_data_original(HOST_UART, CONFIGURATION_STORAGE_PTR, size);
     memcpy(&cfg_boot_meta.IVc, &cfg_meta.IVc, IV_SIZE);
     memcpy(&cfg_boot_meta.tagc, &cfg_meta.tagc, TAG_SIZE);
     uart_writeb(HOST_UART, FRAME_OK); /*remove this later*/
-
 }
-
 
 /**
  * @brief Host interface polling loop to receive configure, update, readback,
  * and boot commands.
- * 
+ *
  * @return int
  */
-int main(void) {
+int main(void)
+{
 
     uint8_t cmd = 0;
 
@@ -447,8 +473,8 @@ int main(void) {
     // example encryption using tiny-AES-c
     // -------------------------------------------------------------------------
     struct AES_ctx ctx;
-    uint8_t key[16] = { 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 
-                        0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
+    uint8_t key[16] = {0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7,
+                       0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
     uint8_t plaintext[16] = "0123456789abcdef";
 
     // initialize context
@@ -469,25 +495,51 @@ int main(void) {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
     uint8_t inItRet = EEPROMInit();
     gcm_initialize();
-    #ifdef MPU_ENABLED
+#ifdef MPU_ENABLED
     mpu_init();
-    #endif
+#endif
     // Handle host commands
-    while (1) {
+    while (1)
+    {
         cmd = uart_readb(HOST_UART);
 
-        switch (cmd) {
+        switch (cmd)
+        {
         case 'C':
+#ifdef MPU_ENABLED
+            mpu_change_ap(4);
+#endif
             handle_configure();
+#ifdef MPU_ENABLED
+            mpu_change_ap(14);
+#endif
             break;
         case 'U':
+#ifdef MPU_ENABLED
+            mpu_change_ap(3);
+#endif
             handle_update();
+#ifdef MPU_ENABLED
+            mpu_change_ap(13);
+#endif
             break;
         case 'R':
+#ifdef MPU_ENABLED
+            mpu_change_ap(34);
+#endif
             handle_readback();
+#ifdef MPU_ENABLED
+            mpu_change_ap(134);
+#endif
             break;
         case 'B':
+#ifdef MPU_ENABLED
+            mpu_change_ap(5);
+#endif
             handle_boot();
+#ifdef MPU_ENABLED
+            mpu_change_ap(15);
+#endif
             break;
         default:
             break;

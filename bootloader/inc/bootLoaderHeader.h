@@ -1,11 +1,16 @@
 #ifndef BOOT_LOADER_HEADER
 #define BOOT_LOADER_HEADER
 
-
+/* macros */
+// #define MPU_ENABLED
 
 // Storage layout
 
 /*
+ * FLASH:
+ *      Bootstrap Vector Tbl: 0x00000000 : 0x0000026C
+ *      Bootstrapper:         0x0000026C : 0x00005800 
+ *      Bootloader:           0x00005800 : 0x0002B400 ()
  * Firmware:
  *      Version: 0x0002B400 : 0x0002B404 (4B)
  *      Size:    0x0002B404 : 0x0002B408 (4B)
@@ -15,6 +20,8 @@
  *      Size:    0x0002FC00 : 0x0003000 (1KB = 4B + pad)
  *      Cfg:     0x00030000 : 0x0004000 (64KB)
  */
+
+#define BOOTLOADER_PTR             ((uint32_t)(FLASH_START + 0x00005800))
 #define FIRMWARE_METADATA_PTR      ((uint32_t)(FLASH_START + 0x0002B400))
 #define FIRMWARE_SIZE_PTR          ((uint32_t)(FIRMWARE_METADATA_PTR + 0))
 #define FIRMWARE_VERSION_PTR       ((uint32_t)(FIRMWARE_METADATA_PTR + 4))
@@ -22,18 +29,23 @@
 #define FIRMWARE_RELEASE_MSG_PTR2  ((uint32_t)(FIRMWARE_METADATA_PTR + FLASH_PAGE_SIZE))
 
 #define FIRMWARE_STORAGE_PTR       ((uint32_t)(FIRMWARE_METADATA_PTR + (FLASH_PAGE_SIZE*2)))
-#define FIRMWARE_BOOT_PTR          ((uint32_t)0x20004000)
 
 #define CONFIGURATION_METADATA_PTR ((uint32_t)(FIRMWARE_STORAGE_PTR + (FLASH_PAGE_SIZE*16)))
 #define CONFIGURATION_SIZE_PTR     ((uint32_t)(CONFIGURATION_METADATA_PTR + 0))
 
 #define CONFIGURATION_STORAGE_PTR  ((uint32_t)(CONFIGURATION_METADATA_PTR + FLASH_PAGE_SIZE))
 
+/*
+ * SRAM:
+ *      Stack:                0x20000000 : 0x20004000
+ *      Firmware:             0x20004000 : 0x20008000
+ */
+#define STACK_PTR                  ((uint32_t)0x20000000)
+#define FIRMWARE_BOOT_PTR          ((uint32_t)0x20004000)
 
 // Firmware update constants
 #define FRAME_OK 0x00
 #define FRAME_BAD 0x01
-
 
 #define BOOTLOADER_SECRET_DATA_PTR 0x40 /*We cannot start from zero as block 0 cannot be hidden. */
 #define EEPROM_SECRET_BLOCK_START 0x1
@@ -97,5 +109,7 @@ bool check_CFG_magic(protected_cfg_format *cfg_meta);
 void handle_update(void);
 void handle_configure(void);
 void handle_CFG_verification_response(protected_cfg_format *cfg_meta);
+
+void mpu_init();
 
 #endif
