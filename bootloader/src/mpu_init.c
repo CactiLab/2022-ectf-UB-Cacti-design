@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "bootLoaderHeader.h"
+#include "driverlib/debug.h"
 #include "driverlib/mpu.h"
 //#include "flash.h"
 // #define MPU_BASE_PTR      ((uint32_t)(0xE000ED90UL))
@@ -15,8 +16,9 @@
 #define MPU_FLASH_FLIGHT_CFG_FLAG_RO MPU_RGN_SIZE_64K | MPU_RGN_PERM_NOEXEC | MPU_RGN_PERM_PRV_RO_USR_RO
 #define MPU_SRAM_FIRMWARE_FLAG MPU_RGN_SIZE_16K | MPU_RGN_PERM_EXEC | MPU_RGN_PERM_PRV_RW_USR_RW
 
-void mpu_handle()
+void mpu_handler()
 {
+    ASSERT(MPU_RGN_SIZE_19K);
 }
 
 void mpu_init()
@@ -91,8 +93,8 @@ void mpu_init()
     MPURegionSet(5, 0x20004000, mpu_flag);
     MPURegionDisable(5);
 
+    MPUIntRegister((void *)mpu_handler);
     MPUEnable(MPU_CONFIG_PRIV_DEFAULT);
-    // MPUIntRegister((void *)mpu_handle);
 }
 
 void mpu_ap_change(uint32_t opt)
