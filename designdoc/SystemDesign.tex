@@ -227,6 +227,27 @@ We implement a challenge-response mechanism to ensure that only the valid host c
   \item [Step 4.] Decrypt the requested memory of the firmware or configuration data and write response on the UART connection for the host.
 \end{itemize}
 
+\subsection{MPU setting for access permission}
+
+As figure~\ref{fig:mpu} shows, based on the design document, FLASH and SRAM are separated into several MPU regions with different access permissions for different operations.
+In detail:
+\begin{itemize}
+	\item At the initialization stage, only the Bootloader and Stack are set as executable and read-write for privileged access.
+	Others are eXecute never and have no read and write permissions.
+	\item At the firmware update stage (command \verb|F|), the firmware region will be changed to readable and writable.
+	\item At the configuration stage (command \verb|C|), the flight configuration region will be changed to readable and writable.
+	\item At readback stage (command \verb|R|), either change the firmware (command \verb|F|) or flight configuration (command \verb|C|) region on FLASH to read-only.
+	\item At the boot stage (command \verb|B|), the firmware region on SRAM will be changed to executable, along with the other regions as readable and writable.
+\end{itemize}
+
+\begin{figure}[!htbp]
+	\begin{centering}
+		\includegraphics[width = .8\textwidth]{pic/MPU_CFG.pdf}
+		\caption{MPU settings for different operations}
+		\label{fig:mpu}
+	\end{centering}
+\end{figure}
+
 % \subsection{Defeat Hardware Trojan}
 
 % \subsection{Defeat Side-channel Attacks}
