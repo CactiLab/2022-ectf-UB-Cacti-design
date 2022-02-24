@@ -2,10 +2,18 @@
 #include <stdbool.h>
 #include "bootLoaderHeader.h"
 #include "driverlib/mpu.h"
+//#include "flash.h"
+// #define MPU_BASE_PTR      ((uint32_t)(0xE000ED90UL))
 
 #define MPU_RGN_SIZE_19K MPU_RGN_SIZE_16K + MPU_RGN_SIZE_2K + MPU_RGN_SIZE_1K
 #define MPU_RGN_SIZE_83K MPU_RGN_SIZE_64K + MPU_RGN_SIZE_19K
 #define MPU_RGN_SIZE_151K MPU_RGN_SIZE_128K + MPU_RGN_SIZE_19K + MPU_RGN_SIZE_4K
+
+#define MPU_FLASH_FIRMWARE_FLAG_RW MPU_RGN_SIZE_19K | MPU_RGN_PERM_NOEXEC | MPU_RGN_PERM_PRV_RW_USR_RW
+#define MPU_FLASH_FIRMWARE_FLAG_RO MPU_RGN_SIZE_19K | MPU_RGN_PERM_NOEXEC | MPU_RGN_PERM_PRV_RO_USR_RO
+#define MPU_FLASH_FLIGHT_CFG_FLAG_RW MPU_RGN_SIZE_64K | MPU_RGN_PERM_NOEXEC | MPU_RGN_PERM_PRV_RW_USR_RW
+#define MPU_FLASH_FLIGHT_CFG_FLAG_RO MPU_RGN_SIZE_64K | MPU_RGN_PERM_NOEXEC | MPU_RGN_PERM_PRV_RO_USR_RO
+#define MPU_SRAM_FIRMWARE_FLAG MPU_RGN_SIZE_16K | MPU_RGN_PERM_EXEC | MPU_RGN_PERM_PRV_RW_USR_RW
 
 void mpu_handle()
 {
@@ -85,4 +93,31 @@ void mpu_init()
 
     MPUEnable(MPU_CONFIG_PRIV_DEFAULT);
     // MPUIntRegister((void *)mpu_handle);
+}
+
+void mpu_ap_change(uint32_t opt)
+{
+    switch (opt)
+    {
+    case 30:
+        MPURegionSet(3, 0x0002b400, MPU_FLASH_FIRMWARE_FLAG_RW);
+    case 31:
+        MPURegionSet(3, 0x0002b400, MPU_FLASH_FIRMWARE_FLAG_RO);
+        MPURegionEnable(3);
+        break;
+    case 40:
+        MPURegionSet(4, 0x00030000, MPU_FLASH_FLIGHT_CFG_FLAG_RW);
+    case 41:
+        MPURegionSet(4, 0x00030000, MPU_FLASH_FLIGHT_CFG_FLAG_RO);
+        MPURegionEnable(4);
+        break;
+    case 50:
+        MPURegionEnable(5);
+        break;
+    default:
+        MPURegionDisable(3);
+        MPURegionDisable(4);
+        MPURegionDisable(5);
+        break;
+    }
 }

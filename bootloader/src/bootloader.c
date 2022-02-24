@@ -126,7 +126,7 @@ void handle_readback(void)
     {
 #ifdef MPU_ENABLED
         mpu_change_ap_flag = 3;
-        MPURegionEnable(3);
+        mpu_ap_change(31);
 #endif
         // Set the base address for the readback
         address = (uint8_t *)FIRMWARE_STORAGE_PTR;
@@ -137,7 +137,7 @@ void handle_readback(void)
     {
 #ifdef MPU_ENABLED
         mpu_change_ap_flag = 4;
-        MPURegionEnable(4);
+        mpu_ap_change(41);
 #endif
         // Set the base address for the readback
         address = (uint8_t *)CONFIGURATION_STORAGE_PTR;
@@ -509,7 +509,7 @@ int main(void)
         {
         case 'C':
 #ifdef MPU_ENABLED
-            MPURegionEnable(4);
+            mpu_ap_change(40);
 #endif
             handle_configure();
 #ifdef MPU_ENABLED
@@ -518,7 +518,7 @@ int main(void)
             break;
         case 'U':
 #ifdef MPU_ENABLED
-            MPURegionEnable(3);
+            mpu_ap_change(30);
 #endif
             handle_update();
 #ifdef MPU_ENABLED
@@ -530,15 +530,13 @@ int main(void)
             break;
         case 'B':
 #ifdef MPU_ENABLED
-            MPURegionEnable(3);
-            MPURegionEnable(4);
-            MPURegionEnable(5);
+            mpu_ap_change(30);
+            mpu_ap_change(40);
+            mpu_ap_change(50);
 #endif
             handle_boot();
 #ifdef MPU_ENABLED
-            MPURegionDisable(3);
-            MPURegionDisable(4);
-            MPURegionDisable(5);
+            mpu_ap_change(99);
 #endif
             break;
         default:
