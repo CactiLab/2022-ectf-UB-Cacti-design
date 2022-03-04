@@ -112,6 +112,8 @@ void handle_readback(void)
     uint8_t region;
     uint8_t *address;
     uint32_t size = 0;
+    uint32_t total_size;
+    uint8_t readback_data[*((uint32_t *)FIRMWARE_SIZE_PTR) > *((uint32_t *)CONFIGURATION_SIZE_PTR) ? *((uint32_t *)FIRMWARE_SIZE_PTR) : *((uint32_t *)CONFIGURATION_SIZE_PTR)];
 #ifdef MPU_ENABLED
     uint32_t mpu_change_ap_flag = 0;
 #endif
@@ -130,7 +132,13 @@ void handle_readback(void)
 #endif
         // Set the base address for the readback
         address = (uint8_t *)FIRMWARE_STORAGE_PTR;
-        // Acknowledge the host
+        total_size = *((uint32_t *)FIRMWARE_SIZE_PTR);
+        if (!verify_saffire_cipher(total_size, address, readback_data, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
+        {
+            uart_writeb(HOST_UART, 'X');
+            return;
+        }
+            // Acknowledge the host
         uart_writeb(HOST_UART, 'F');
     }
     else if (region == 'C')
@@ -141,6 +149,12 @@ void handle_readback(void)
 #endif
         // Set the base address for the readback
         address = (uint8_t *)CONFIGURATION_STORAGE_PTR;
+        total_size = *((uint32_t *)CONFIGURATION_SIZE_PTR);
+        if (!verify_saffire_cipher(total_size, address, readback_data, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
+        {
+            uart_writeb(HOST_UART, 'Y');
+            return;
+        }
         // Acknowledge the hose
         uart_writeb(HOST_UART, 'C');
     }
@@ -157,7 +171,7 @@ void handle_readback(void)
     size |= (uint32_t)uart_readb(HOST_UART);
 
     // Read out the memory
-    uart_write(HOST_UART, address, size);
+    uart_write(HOST_UART, readback_data, size);
 #ifdef MPU_ENABLED
     if (mpu_change_ap_flag != 0)
         MPURegionDisable(mpu_change_ap_flag);
