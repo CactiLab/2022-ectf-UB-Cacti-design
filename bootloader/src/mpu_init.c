@@ -103,12 +103,16 @@ void mpu_ap_change(uint32_t opt)
     {
     case 30:
         MPURegionSet(3, 0x0002b400, MPU_FLASH_FIRMWARE_FLAG_RW);
+        MPURegionEnable(3);
+        break;
     case 31:
         MPURegionSet(3, 0x0002b400, MPU_FLASH_FIRMWARE_FLAG_RO);
         MPURegionEnable(3);
         break;
     case 40:
         MPURegionSet(4, 0x00030000, MPU_FLASH_FLIGHT_CFG_FLAG_RW);
+        MPURegionEnable(4);
+        break;
     case 41:
         MPURegionSet(4, 0x00030000, MPU_FLASH_FLIGHT_CFG_FLAG_RO);
         MPURegionEnable(4);

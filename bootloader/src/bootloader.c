@@ -138,7 +138,7 @@ void handle_readback(void)
             uart_writeb(HOST_UART, 'X');
             return;
         }
-            // Acknowledge the host
+        // Acknowledge the host
         uart_writeb(HOST_UART, 'F');
     }
     else if (region == 'C')
@@ -160,7 +160,9 @@ void handle_readback(void)
     }
     else
     {
+#ifdef MPU_ENABLED
         mpu_change_ap_flag = 0;
+#endif
         return;
     }
 
