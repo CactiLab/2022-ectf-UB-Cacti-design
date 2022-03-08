@@ -34,6 +34,6 @@ $(OUTPUT4) : $(OBJS)
 	@$(CC) -c $< $(CCFLAGS) $(IPATH)
 
 clean:
-	@rm $(OUTPUTLIST) publicKey.txt privateKey.txt publicKey
+	@rm $(OUTPUTLIST) host_publicKey* host_privateKey* challenge_*
 	# @rm $(OUTPUTLIST)
 .PHONY:clean

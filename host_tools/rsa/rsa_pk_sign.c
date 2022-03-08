@@ -16,21 +16,20 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "rsa.h"
-// #include "sha1.h"
+#include "sha1.h"
 #include "md5.h"
 #include "rsa_pk_sign.h"
+
+#define DEBUG
 
 int sign_pk(char *challenge_file, char *challenge_signed_file)
 {
     rsa_sk host_pri;
 
-    uint8_t chall[16];
-
-    // unsigned char chall[PK_SIGN_SZ] = {0};
-    char *host_pri_file = "host_privateKey";
+    unsigned char chall[16] = {0};
     unsigned char output[64] = {0};
+    char *host_pri_file = "host_privateKey";
 
-    DTYPE msg[MAX_MODULUS_LENGTH * 2] = {0};
     DTYPE cipher[MAX_MODULUS_LENGTH] = {0};
 
     memset(&host_pri, 0, sizeof(rsa_sk));
@@ -56,16 +55,40 @@ int sign_pk(char *challenge_file, char *challenge_signed_file)
         return -1;
     }
 
-    fread(chall, sizeof(uint8_t)*16, 1, fp);
+    fread(chall, sizeof(uint8_t) * 16, 1, fp);
     fclose(fp);
 
+#ifdef DEBUG
+    printf("challenge:\n");
+    for (size_t i = 0; i < 16; i++)
+    {
+        printf("%02x", chall[i]);
+    }
+    printf("\n");
+#endif
     // printf("SHA1 of the target pk starts...\n");
-    // SHA_Simple((unsigned char *)&chall, sizeof(rsa_pk), output);
-    MD5Calc((const unsigned char *)&chall, sizeof(uint8_t)*16, output);
+    // SHA_Simple(chall, sizeof(chall), output);
+    MD5Calc(chall, sizeof(chall), output);
+    // memcpy(output, chall, sizeof(chall));
 
+#ifdef DEBUG
+    printf("sign hash:\n");
+    for (size_t i = 0; i < 64; i++)
+    {
+        printf("%02x", output[i]);
+    }
+    printf("\n");
+#endif
     // printf("sign the target pk digest...\n");
     rsa_decrypt(cipher, MAX_MODULUS_LENGTH, (DTYPE *)&output, MAX_MODULUS_LENGTH, &host_pri);
-
+#ifdef DEBUG
+    printf("cipher:\n");
+    for (size_t i = 0; i < sizeof(cipher); i++)
+    {
+        printf("%02x", cipher[i]);
+    }
+    printf("\n");
+#endif
     fp = fopen(challenge_signed_file, "wb");
     if (fp == NULL)
     {
@@ -123,7 +146,7 @@ int auth_pk(char *challenge_file, char *challenge_signed_file)
         return -1;
     }
 
-    fread(chall, sizeof(uint8_t)*16, 1, fp);
+    fread(chall, sizeof(uint8_t) * 16, 1, fp);
     fclose(fp);
 
     // configure the e
@@ -144,11 +167,27 @@ int auth_pk(char *challenge_file, char *challenge_signed_file)
     fread(cipher, MAX_MODULUS_LENGTH * 2, 1, fp);
     fclose(fp);
 
-    printf("SHA1 of the target pk starts...\n");
-    // SHA_Simple((unsigned char *)&chall, sizeof(rsa_pk), output);
-    MD5Calc((const unsigned char *)&chall, sizeof(rsa_pk), output);
-
-    printf("auth the target pk digest...\n");
+    printf("SHA1 of the target string...\n");
+#ifdef DEBUG
+    printf("challenge:\n");
+    for (size_t i = 0; i < 16; i++)
+    {
+        printf("%02x", chall[i]);
+    }
+    printf("\n");
+#endif
+    // SHA_Simple(chall, sizeof(chall), output);
+    MD5Calc(chall, sizeof(chall), output);
+    // memcpy(output, chall, sizeof(chall));
+#ifdef DEBUG
+    printf("sign hash:\n");
+    for (size_t i = 0; i < 64; i++)
+    {
+        printf("%02x", output[i]);
+    }
+    printf("\n");
+#endif
+    printf("auth the target string digest...\n");
     rsa_encrypt(decipher, MAX_MODULUS_LENGTH, cipher, MAX_MODULUS_LENGTH, &host_pub);
 
     fp = fopen(tmp, "wb");
@@ -163,7 +202,14 @@ int auth_pk(char *challenge_file, char *challenge_signed_file)
     //write signed digest into file
     fwrite(decipher, 1, MAX_MODULUS_LENGTH * 2, fp);
     fclose(fp);
-
+#ifdef DEBUG
+    printf("decipher:\n");
+    for (size_t i = 0; i < sizeof(decipher); i++)
+    {
+        printf("%02x", decipher[i]);
+    }
+    printf("\n");
+#endif
     if (BN_cmp(decipher, MAX_MODULUS_LENGTH, (DTYPE *)&output, MAX_MODULUS_LENGTH) == 0)
     {
         printf("\nAfter decryption, plaintext equal to message.\n");
