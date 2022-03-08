@@ -12,10 +12,10 @@ int main(void)
 	rsa_pk pk;
 	rsa_sk sk;
 
-	char *pkey = "publicKey.txt";
-	char *skey = "privateKey.txt";
-    char *pkey_raw = "publicKey";
-    char *skey_raw = "privateKey";
+	char *pkey = "host_publicKey.txt";
+	char *skey = "host_privateKey.txt";
+    char *pkey_raw = "host_publicKey";
+    char *skey_raw = "host_privateKey";
 
 	FILE *fp;
 

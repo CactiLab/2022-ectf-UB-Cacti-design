@@ -29,23 +29,18 @@ int main(int argc, char *argv[])
     char publickey[300] = {0};
     char plainmsg[MAX_MODULUS_LENGTH * 2 + 1];
 
-    char cipher_file[100] = {0};
-    char decipher_file[100] = {0};
-    char pub_file[100] = {0};
-    char pri_file[100] = {0};
+    char challenge_signed_file[100] = "challenge_signed";
+    char challenge_auth_file[100] = "challenge_auth";
+    char pub_file[100] = "host_publicKey";
+    char pri_file[100] = "host_privateKey";
 
     memset(&pk, 0, sizeof(rsa_pk));
 
-    if (argc < 2)
-    {
-        printf("usage: ./auth ${SCEWL_ID}\n");
-        return -1;
-    }
-
-    sprintf(pub_file, "rsa/%s_publicKey", argv[1]);
-    sprintf(pri_file, "%s_privateKey", argv[1]);
-    sprintf(cipher_file, "rsa/%s_cipher", argv[1]);
-    sprintf(decipher_file, "rsa/%s_decipher", argv[1]);
+    // if (argc < 2)
+    // {
+    //     printf("usage: ./auth ${SCEWL_ID}\n");
+    //     return -1;
+    // }
 
     FILE *fp;
 
@@ -67,10 +62,10 @@ int main(int argc, char *argv[])
     pk.e[MAX_PRIME_LENGTH - 1] = 1;
 
     //read ciphertext from file
-    fp = fopen(cipher_file, "rb");
+    fp = fopen(challenge_signed_file, "rb");
     if (fp == NULL)
     {
-        printf("Cannot open file %s\n", cipher_file);
+        printf("Cannot open file %s\n", challenge_signed_file);
         return -1;
     }
     fread(cipher, sizeof(cipher), 1, fp);
@@ -83,11 +78,11 @@ int main(int argc, char *argv[])
 
     //write plaintext into file
     hex_to_string(plainmsg, plaintext);
-    fp = fopen(decipher_file, "wb");
+    fp = fopen(challenge_auth_file, "wb");
 
     if (fp == NULL)
     {
-        printf("Cannot open file %s\n", decipher_file);
+        printf("Cannot open file %s\n", challenge_auth_file);
         return -1;
     }
     fwrite(plainmsg, 1, MAX_MODULUS_LENGTH * 2, fp);
