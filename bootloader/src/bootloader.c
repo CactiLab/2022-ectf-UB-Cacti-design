@@ -25,6 +25,7 @@
 #include "../lib/auth/md5.h"
 
 #include "bootLoaderHeader.h"
+#include "rsa_key.h"
 // this will run if EXAMPLE_AES is defined in the Makefile (see line 54)
 #ifdef EXAMPLE_AES
 #include "aes.h"
@@ -149,9 +150,30 @@ void handle_readback(void)
 
 #ifdef RSA_AUTH
     // add verification: send challenge
-    uint8_t *random = random_generate();
-    uart_write(HOST_UART, random, 16);
+    uint8_t *challenge = random_generate();
+    // send the challenge
+    uart_write(HOST_UART, challenge, 16);
+    // calculate the hash of the challenge
+    uint8_t output[64];
+    MD5Calc(challenge, sizeof(challenge), output);
+
+    // receive the signature from host: chellenge_signed
+    uart_write(HOST_UART, challenge_signed, 16);
+    // code here to receive from host
+    // 
+    uint8_t auth_challenge[16];
+    // authenticate the signature
+    rsa_encrypt(auth_challenge, MAX_MODULUS_LENGTH, challenge_signed, MAX_MODULUS_LENGTH, &host_pub);
+    if (BN_cmp(auth_challenge, MAX_MODULUS_LENGTH, (DTYPE *)&output, MAX_MODULUS_LENGTH) == 0)
+    {
+        return 0;
+    }
+    else
+    {
+        return -1;
+    }
 #endif
+
     // Receive region identifier
     region = (uint32_t)uart_readb(HOST_UART);
 
