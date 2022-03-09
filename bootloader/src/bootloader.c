@@ -155,7 +155,8 @@ void handle_readback(void)
     uart_write(HOST_UART, challenge, 16);
     // calculate the hash of the challenge
     uint8_t output[64];
-    MD5Calc(challenge, sizeof(challenge), output);
+    // MD5Calc(challenge, sizeof(challenge), output);
+    memcpy(output, challenge, sizeof(challenge));
 
 
     // receive the signature from host: chellenge_signed

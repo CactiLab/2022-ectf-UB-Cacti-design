@@ -68,8 +68,8 @@ int sign_pk(char *challenge_file, char *challenge_signed_file)
 #endif
     // printf("SHA1 of the target pk starts...\n");
     // SHA_Simple(chall, sizeof(chall), output);
-    MD5Calc(chall, sizeof(chall), output);
-    // memcpy(output, chall, sizeof(chall));
+    // MD5Calc(chall, sizeof(chall), output);
+    memcpy(output, chall, sizeof(chall));
 
 #ifdef DEBUG
     printf("sign hash:\n");
@@ -177,8 +177,8 @@ int auth_pk(char *challenge_file, char *challenge_signed_file)
     printf("\n");
 #endif
     // SHA_Simple(chall, sizeof(chall), output);
-    MD5Calc(chall, sizeof(chall), output);
-    // memcpy(output, chall, sizeof(chall));
+    // MD5Calc(chall, sizeof(chall), output);
+    memcpy(output, chall, sizeof(chall));
 #ifdef DEBUG
     printf("sign hash:\n");
     for (size_t i = 0; i < 64; i++)
