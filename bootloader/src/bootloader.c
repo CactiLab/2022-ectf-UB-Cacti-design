@@ -25,7 +25,7 @@
 #include "../lib/auth/md5.h"
 
 #include "bootLoaderHeader.h"
-#include "rsa_key.h"
+// #include "rsa_key.h"
 // this will run if EXAMPLE_AES is defined in the Makefile (see line 54)
 #ifdef EXAMPLE_AES
 #include "aes.h"
@@ -157,8 +157,10 @@ void handle_readback(void)
     uint8_t output[64];
     MD5Calc(challenge, sizeof(challenge), output);
 
+
     // receive the signature from host: chellenge_signed
-    uart_write(HOST_UART, challenge_signed, 16);
+    uint8_t challenge_signed[16];
+    uart_read(HOST_UART, challenge_signed, 16);
     // code here to receive from host
     // 
     uint8_t auth_challenge[16];
