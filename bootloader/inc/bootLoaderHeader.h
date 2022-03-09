@@ -4,6 +4,7 @@
 /* macros */
 #define MPU_ENABLED
 
+#include "../lib/rsa/keys.h"
 // Storage layout
 
 /*
