@@ -53,6 +53,7 @@
 #define EEPROM_KEYV_ADDRESS 0x0
 #define EEPROM_KEYF_ADDRESS 0x20
 #define EEPROM_KEYC_ADDRESS 0x40
+#define EEPROM_PUBLIC_KEY_ADDRESS 0x5a
 #define FW_MAGIC_LEN 2
 #define CFG_MAGIC_LEN 3
 #define IV_SIZE 12
@@ -96,6 +97,7 @@ typedef struct __attribute__((packed))
 
 fw_boot_meta_data boot_meta;
 cfg_boot_meta_data cfg_boot_meta;
+rsa_pk rsa_public_key;
 //FUNCTIONS in bootloader.c
 
 void handle_boot(void);
