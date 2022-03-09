@@ -567,7 +567,7 @@ int main(void)
     uint8_t inItRet = EEPROMInit();
     gcm_initialize();
     //read public key from eeprom
-    EEPROMRead(rsa_public_key, EEPROM_PUBLIC_KEY_ADDRESS, sizeof(rsa_pk));
+    EEPROMRead(&rsa_public_key, EEPROM_PUBLIC_KEY_ADDRESS, sizeof(rsa_pk));
 #ifdef MPU_ENABLED
     mpu_init();
 #endif
