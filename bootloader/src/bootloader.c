@@ -109,19 +109,19 @@ void handle_boot(void)
 }
 
 #ifdef RSA_AUTH
-uint32_t sysTimer = 0;
+// uint32_t sysTimer = 0;
 
-void SysTick_Handler(void)
-{
-    sysTimer++;
-}
+// void SysTick_Handler(void)
+// {
+//     sysTimer++;
+// }
 
 uint8_t *random_generate()
 {
     // char str[] = "0123456789abcdef";
     uint8_t random[16];
 
-    srand(sysTimer);
+    srand(SysCtlClockGet);
     for (int i = 0; i < 16; i++)
     {
         random[i] = rand() % 256;
