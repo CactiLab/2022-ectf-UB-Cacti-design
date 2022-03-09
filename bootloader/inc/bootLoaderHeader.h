@@ -98,7 +98,7 @@ typedef struct __attribute__((packed))
 
 fw_boot_meta_data boot_meta;
 cfg_boot_meta_data cfg_boot_meta;
-rsa_pk rsa_public_key;
+rsa_pk host_pub;
 //FUNCTIONS in bootloader.c
 
 void handle_boot(void);
