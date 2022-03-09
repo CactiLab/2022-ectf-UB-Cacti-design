@@ -116,18 +116,14 @@ void handle_boot(void)
 //     sysTimer++;
 // }
 
-uint8_t *random_generate()
+void random_generate(uint8_t *challenge)
 {
     // char str[] = "0123456789abcdef";
-    uint8_t random[16];
-
     srand(SysCtlClockGet);
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < CHALLENGE_SIZE; i++)
     {
-        random[i] = rand() % 256;
+        challenge[i] = rand() % 256;
     }
-
-    return random;
 }
 #endif
 
@@ -149,8 +145,9 @@ void handle_readback(void)
     uart_writeb(HOST_UART, 'R');
 
 #ifdef RSA_AUTH
+    uint8_t challenge[CHALLENGE_SIZE] ={0};
     // add verification: send challenge
-    uint8_t *challenge = random_generate();
+    random_generate(challenge);
     // send the challenge
     uart_write(HOST_UART, challenge, 16);
     // calculate the hash of the challenge

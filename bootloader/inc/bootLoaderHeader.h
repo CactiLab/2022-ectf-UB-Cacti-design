@@ -64,7 +64,7 @@
 #define FW_META_INFO (FW_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE)
 #define CFG_META_INFO (CFG_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE)
 #define MAX_RELEASE_MESSAGE_SIZE 1025
-
+#define CHALLENGE_SIZE 16
 
 typedef struct __attribute__((packed))
 {
