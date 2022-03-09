@@ -37,7 +37,7 @@ CFLAGS+=-DOLDEST_VERSION=${OLDEST_VERSION}
 all: ${COMPILER}
 
 # this must be the last build rule of `all`
-all: ${COMPILER}/aes.o ${COMPILER}/aes-gcm.o ${COMPILER}/gcm.o ${COMPILER}/bootloader.axf
+all:  ${COMPILER}/md5.o ${COMPILER}/bn.o ${COMPILER}/keys.o ${COMPILER}/rsa.o ${COMPILER}/rsa_auth.o ${COMPILER}/aes.o ${COMPILER}/aes-gcm.o ${COMPILER}/gcm.o ${COMPILER}/bootloader.axf
 
 
 ################ start crypto example ################
@@ -77,6 +77,31 @@ LDFLAGS+=${COMPILER}/aes.o
 LDFLAGS+=${COMPILER}/aes-gcm.o
 LDFLAGS+=${COMPILER}/gcm.o
 #ADD AES_GCM crypto end
+
+
+################ add RSA ################
+# path to auth library
+RSAPATH=${ROOT}/lib/rsa
+# add path to auth source files to source path
+VPATH+=${RSAPATH}
+# add auth library to includes path
+IPATH+=${RSAPATH}
+# add auth object file to includes path
+LDFLAGS+=${COMPILER}/bn.o 
+LDFLAGS+=${COMPILER}/keys.o 
+LDFLAGS+=${COMPILER}/rsa.o
+
+# ################ add sha1 ################
+# path to auth library
+MD5PATH=${ROOT}/lib/auth
+# add path to auth source files to source path
+VPATH+=${MD5PATH}
+# add auth library to includes path
+IPATH+=${MD5PATH}
+# add auth object file to includes path
+LDFLAGS+=${COMPILER}/md5.o
+
+################ end adding RSA ################
 
 # build libraries
 ${TIVA_ROOT}/driverlib/${COMPILER}/libdriver.a:
