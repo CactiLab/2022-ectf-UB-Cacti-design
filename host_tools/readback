@@ -16,6 +16,11 @@ import logging
 import socket
 from pathlib import Path
 
+
+# add for auth
+import os
+# add for auth
+
 from util import print_banner, LOG_FORMAT
 
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
@@ -38,6 +43,25 @@ def readback(socket_number, region, num_bytes):
         # Receive bootloader acknowledgement
         log.info("Waiting for bootloader to enter readback mode...")
         while sock.recv(1) != b"R":
+
+            # add authentication: receive challenge
+            challenge_receive = sock.recv(16)
+
+            # save it to the challenge file
+            challenge_file = open("challenge", "w+")
+            challenge_file.write(str(challenge_receive))
+            challenge_file.close()
+
+            # call the sign binary to sign the challenge
+            os.system("./sign")
+
+            # send the singed challenge to the boot loader 
+            with open('challenge_signed', 'rb') as f:
+                data = f.read(16)
+                sock.send(data)
+
+
+
             pass
 
         # Send the region identifier
