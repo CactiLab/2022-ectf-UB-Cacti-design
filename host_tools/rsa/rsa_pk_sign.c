@@ -28,7 +28,7 @@ int sign_pk(char *challenge_file, char *challenge_signed_file)
 
     unsigned char chall[16] = {0};
     unsigned char output[64] = {0};
-    char *host_pri_file = "host_privateKey";
+    char *host_pri_file = "/host_tools/rsa/host_privateKey";
 
     DTYPE cipher[MAX_MODULUS_LENGTH] = {0};
 
@@ -112,7 +112,7 @@ int auth_pk(char *challenge_file, char *challenge_signed_file)
 
     uint8_t chall[16];
 
-    char *host_pub_file = "host_publicKey";
+    char *host_pub_file = "/host_tools/rsa/host_publicKey";
     // char *tmp = "rsa/tmp";
     char tmp[100] = {0};
     unsigned char output[64] = {0};
@@ -224,8 +224,8 @@ int auth_pk(char *challenge_file, char *challenge_signed_file)
 
 int main(int argc, char *argv[])
 {
-    char challenge_file[100] = "challenge";
-    char challenge_signed_file[100] = "challenge_signed";
+    char challenge_file[100] = "/host_tools/rsa/challenge";
+    char challenge_signed_file[100] = "/host_tools/rsa/challenge_signed";
 
     // if (argc < 2)
     // {
