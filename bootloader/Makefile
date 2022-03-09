@@ -37,7 +37,7 @@ CFLAGS+=-DOLDEST_VERSION=${OLDEST_VERSION}
 all: ${COMPILER}
 
 # this must be the last build rule of `all`
-all:  ${COMPILER}/md5.o ${COMPILER}/bn.o ${COMPILER}/keys.o ${COMPILER}/rsa.o ${COMPILER}/rsa_auth.o ${COMPILER}/aes.o ${COMPILER}/aes-gcm.o ${COMPILER}/gcm.o ${COMPILER}/bootloader.axf
+all:  ${COMPILER}/md5.o ${COMPILER}/bn.o ${COMPILER}/keys.o ${COMPILER}/rsa.o ${COMPILER}/aes.o ${COMPILER}/aes-gcm.o ${COMPILER}/gcm.o ${COMPILER}/bootloader.axf
 
 
 ################ start crypto example ################
