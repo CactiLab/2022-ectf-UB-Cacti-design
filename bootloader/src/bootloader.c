@@ -21,6 +21,9 @@
 #include "uart.h"
 #include "aes-gcm.h"
 
+#include "../lib/rsa/rsa.h"
+#include "../lib/auth/md5.h"
+
 #include "bootLoaderHeader.h"
 // this will run if EXAMPLE_AES is defined in the Makefile (see line 54)
 #ifdef EXAMPLE_AES
@@ -104,6 +107,29 @@ void handle_boot(void)
     firmware();
 }
 
+#ifdef RSA_AUTH
+uint32_t sysTimer = 0;
+
+void SysTick_Handler(void)
+{
+    sysTimer++;
+}
+
+uint8_t *random_generate()
+{
+    // char str[] = "0123456789abcdef";
+    uint8_t random[16];
+
+    srand(sysTimer);
+    for (int i = 0; i < 16; i++)
+    {
+        random[i] = rand() % 256;
+    }
+
+    return random;
+}
+#endif
+
 /**
  * @brief Send the firmware data over the host interface.
  */
@@ -121,6 +147,11 @@ void handle_readback(void)
     // Acknowledge the host
     uart_writeb(HOST_UART, 'R');
 
+#ifdef RSA_AUTH
+    // add verification: send challenge
+    uint8_t *random = random_generate();
+    uart_write(HOST_UART, random, 16);
+#endif
     // Receive region identifier
     region = (uint32_t)uart_readb(HOST_UART);
 
