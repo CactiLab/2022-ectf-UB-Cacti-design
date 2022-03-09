@@ -149,7 +149,7 @@ void handle_readback(void)
     // add verification: send challenge
     random_generate(challenge);
     // send the challenge
-    uart_write(HOST_UART, challenge, 16);
+    uart_write(HOST_UART, challenge, CHALLENGE_SIZE);
     // calculate the hash of the challenge
     uint8_t output[64];
     // MD5Calc(challenge, sizeof(challenge), output);
