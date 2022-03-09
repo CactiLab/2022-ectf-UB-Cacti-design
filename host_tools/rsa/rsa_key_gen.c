@@ -14,8 +14,8 @@ int main(void)
 
 	// char *pkey = "host_publicKey.txt";
 	// char *skey = "host_privateKey.txt";
-    char *pkey_raw = "host_publicKey";
-    char *skey_raw = "host_privateKey";
+    char *pkey_raw = "/host_tools/rsa/host_publicKey";
+    char *skey_raw = "/host_tools/rsa/host_privateKey";
 
 	FILE *fp;
 
