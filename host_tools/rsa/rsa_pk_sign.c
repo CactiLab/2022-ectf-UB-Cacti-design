@@ -20,6 +20,8 @@
 #include "md5.h"
 #include "rsa_pk_sign.h"
 
+#define CHALLENGE_SIZE 16
+
 #define DEBUG
 
 int sign_pk(char *challenge_file, char *challenge_signed_file)
@@ -60,25 +62,17 @@ int sign_pk(char *challenge_file, char *challenge_signed_file)
 
 #ifdef DEBUG
     printf("challenge:\n");
-    for (size_t i = 0; i < 16; i++)
+    for (size_t i = 0; i < CHALLENGE_SIZE; i++)
     {
         printf("%02x", chall[i]);
     }
     printf("\n");
 #endif
     // printf("SHA1 of the target pk starts...\n");
-    // SHA_Simple(chall, sizeof(chall), output);
-    // MD5Calc(chall, sizeof(chall), output);
-    memcpy(output, chall, sizeof(chall));
+    // SHA_Simple(chall, CHALLENGE_SIZE, output);
+    // MD5Calc(chall, CHALLENGE_SIZE, output);
+    memcpy(output, chall, CHALLENGE_SIZE);
 
-#ifdef DEBUG
-    printf("sign hash:\n");
-    for (size_t i = 0; i < 64; i++)
-    {
-        printf("%02x", output[i]);
-    }
-    printf("\n");
-#endif
     // printf("sign the target pk digest...\n");
     rsa_decrypt(cipher, MAX_MODULUS_LENGTH, (DTYPE *)&output, MAX_MODULUS_LENGTH, &host_pri);
 #ifdef DEBUG
@@ -170,23 +164,16 @@ int auth_pk(char *challenge_file, char *challenge_signed_file)
     printf("SHA1 of the target string...\n");
 #ifdef DEBUG
     printf("challenge:\n");
-    for (size_t i = 0; i < 16; i++)
+    for (size_t i = 0; i < CHALLENGE_SIZE; i++)
     {
         printf("%02x", chall[i]);
     }
     printf("\n");
 #endif
-    // SHA_Simple(chall, sizeof(chall), output);
-    // MD5Calc(chall, sizeof(chall), output);
-    memcpy(output, chall, sizeof(chall));
-#ifdef DEBUG
-    printf("sign hash:\n");
-    for (size_t i = 0; i < 64; i++)
-    {
-        printf("%02x", output[i]);
-    }
-    printf("\n");
-#endif
+    // SHA_Simple(chall, CHALLENGE_SIZE, output);
+    // MD5Calc(chall, CHALLENGE_SIZE, output);
+    memcpy(output, chall, CHALLENGE_SIZE);
+
     printf("auth the target string digest...\n");
     rsa_encrypt(decipher, MAX_MODULUS_LENGTH, cipher, MAX_MODULUS_LENGTH, &host_pub);
 
