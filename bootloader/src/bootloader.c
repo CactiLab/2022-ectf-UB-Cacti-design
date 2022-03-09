@@ -166,13 +166,10 @@ void handle_readback(void)
     uint8_t auth_challenge[16];
     // authenticate the signature
     rsa_encrypt(auth_challenge, MAX_MODULUS_LENGTH, challenge_signed, MAX_MODULUS_LENGTH, &host_pub);
-    if (BN_cmp(auth_challenge, MAX_MODULUS_LENGTH, (DTYPE *)&output, MAX_MODULUS_LENGTH) == 0)
+    if (!BN_cmp(auth_challenge, MAX_MODULUS_LENGTH, (DTYPE *)&output, MAX_MODULUS_LENGTH) == 0)
     {
-        return 0;
-    }
-    else
-    {
-        return -1;
+        //uart_writeb(HOST_UART, 'Y');
+        return;
     }
 #endif
 
