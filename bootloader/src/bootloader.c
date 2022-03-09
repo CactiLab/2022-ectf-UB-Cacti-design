@@ -158,7 +158,7 @@ void handle_readback(void)
     MD5Calc(challenge, sizeof(challenge), output);
 
     // receive the signature from host: chellenge_signed
-    // uart_read();
+    uart_write(HOST_UART, challenge_signed, 16);
     // code here to receive from host
     // 
     uint8_t auth_challenge[16];
