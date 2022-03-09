@@ -2,7 +2,7 @@
 #define BOOT_LOADER_HEADER
 
 /* macros */
-#define MPU_ENABLED
+// #define MPU_ENABLED
 #define RSA_AUTH
 #include "../lib/rsa/keys.h"
 // Storage layout
@@ -55,6 +55,7 @@
 #define EEPROM_KEYF_ADDRESS 0x20
 #define EEPROM_KEYC_ADDRESS 0x40
 #define EEPROM_PUBLIC_KEY_ADDRESS 0x60
+#define EEPROM_HOST_PUBKEY_SIZE 164
 #define FW_MAGIC_LEN 2
 #define CFG_MAGIC_LEN 3
 #define IV_SIZE 12
@@ -98,7 +99,6 @@ typedef struct __attribute__((packed))
 
 fw_boot_meta_data boot_meta;
 cfg_boot_meta_data cfg_boot_meta;
-rsa_pk host_pub;
 //FUNCTIONS in bootloader.c
 
 void handle_boot(void);

@@ -32,15 +32,15 @@ include ${TIVA_ROOT}/makedefs
 
 # add initial firmware version
 CFLAGS+=-DOLDEST_VERSION=${OLDEST_VERSION}
-
-CFLAGS+=-W
+# CFLAGS+=-O2
+CFLAGS+=-w
 
 # this rule must come first in `all`
 all: ${COMPILER}
 
 # this must be the last build rule of `all`
-all:  ${COMPILER}/md5.o ${COMPILER}/bn.o ${COMPILER}/keys.o ${COMPILER}/rsa.o ${COMPILER}/aes.o ${COMPILER}/aes-gcm.o ${COMPILER}/gcm.o ${COMPILER}/bootloader.axf
-
+all: ${COMPILER}/aes.o ${COMPILER}/aes-gcm.o ${COMPILER}/gcm.o ${COMPILER}/bootloader.axf
+ 
 
 ################ start crypto example ################
 # example AES rules to build in tiny-AES-c: https://github.com/kokke/tiny-AES-c
@@ -82,26 +82,26 @@ LDFLAGS+=${COMPILER}/gcm.o
 
 
 ################ add RSA ################
-# path to auth library
-RSAPATH=${ROOT}/lib/rsa
-# add path to auth source files to source path
-VPATH+=${RSAPATH}
-# add auth library to includes path
-IPATH+=${RSAPATH}
-# add auth object file to includes path
-LDFLAGS+=${COMPILER}/bn.o 
-LDFLAGS+=${COMPILER}/keys.o 
-LDFLAGS+=${COMPILER}/rsa.o
+# # path to auth library
+# RSAPATH=${ROOT}/lib/rsa
+# # add path to auth source files to source path
+# VPATH+=${RSAPATH}
+# # add auth library to includes path
+# IPATH+=${RSAPATH}
+# # add auth object file to includes path
+# LDFLAGS+=${COMPILER}/bn.o 
+# LDFLAGS+=${COMPILER}/keys.o 
+# LDFLAGS+=${COMPILER}/rsa.o
 
 # ################ add sha1 ################
-# path to auth library
-MD5PATH=${ROOT}/lib/auth
-# add path to auth source files to source path
-VPATH+=${MD5PATH}
-# add auth library to includes path
-IPATH+=${MD5PATH}
-# add auth object file to includes path
-LDFLAGS+=${COMPILER}/md5.o
+# # path to auth library
+# MD5PATH=${ROOT}/lib/auth
+# # add path to auth source files to source path
+# VPATH+=${MD5PATH}
+# # add auth library to includes path
+# IPATH+=${MD5PATH}
+# # add auth object file to includes path
+# LDFLAGS+=${COMPILER}/md5.o
 
 ################ end adding RSA ################
 
@@ -139,6 +139,9 @@ arg_check:
 
 # Check arguments
 ${COMPILER}/bootloader.axf: arg_check
+${COMPILER}/bootloader.axf: ${COMPILER}/bn.o
+${COMPILER}/bootloader.axf: ${COMPILER}/keys.o
+${COMPILER}/bootloader.axf: ${COMPILER}/rsa.o
 ${COMPILER}/bootloader.axf: ${COMPILER}/flash.o
 ${COMPILER}/bootloader.axf: ${COMPILER}/mpu_init.o
 ${COMPILER}/bootloader.axf: ${COMPILER}/uart.o

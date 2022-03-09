@@ -21,8 +21,10 @@
 #include "uart.h"
 #include "aes-gcm.h"
 
-#include "../lib/rsa/rsa.h"
-#include "../lib/auth/md5.h"
+// #include "bn.h"
+// #include "keys.h"
+#include "rsa.h"
+// #include "../lib/auth/md5.h"
 
 #include "bootLoaderHeader.h"
 // #include "rsa_key.h"
@@ -122,7 +124,8 @@ void random_generate(uint8_t *challenge)
     srand(SysCtlClockGet);
     for (int i = 0; i < CHALLENGE_SIZE; i++)
     {
-        challenge[i] = rand() % 256;
+        challenge[i] = '0' + (rand() % 128);
+        // challenge[i] = rand() % 256;
     }
 }
 #endif
@@ -148,22 +151,26 @@ void handle_readback(void)
     uint8_t challenge[CHALLENGE_SIZE] = {0};
     uint8_t challenge_signed[CHALLENGE_SIZE] = {0};
     uint8_t challenge_auth[CHALLENGE_SIZE] = {0};
+    //read public key from eeprom
+    rsa_pk host_pub;
+    EEPROMRead(&host_pub, EEPROM_PUBLIC_KEY_ADDRESS, EEPROM_HOST_PUBKEY_SIZE);
     // add verification: send challenge
     random_generate(challenge);
     // send the challenge
     uart_write(HOST_UART, challenge, CHALLENGE_SIZE);
 
-    // receive the signature from host: chellenge_signed  
+    // receive the signature from host: chellenge_signed
     uart_read(HOST_UART, challenge_signed, MAX_MODULUS_LENGTH * 2);
 
-    // configure the e
-    BN_init(host_pub.e, MAX_PRIME_LENGTH);
-    //e=2^CHALLENGE_SIZE+1
-    host_pub.e[MAX_PRIME_LENGTH - 2] = 1;
-    host_pub.e[MAX_PRIME_LENGTH - 1] = 1;
+    // // configure the e
+    // BN_init(host_pub.e, MAX_PRIME_LENGTH);
+    // //e=2^CHALLENGE_SIZE+1
+    // host_pub.e[MAX_PRIME_LENGTH - 2] = 1;
+    // host_pub.e[MAX_PRIME_LENGTH - 1] = 1;
 
-    rsa_encrypt((DTYPE *)&challenge_auth, CHALLENGE_SIZE, (DTYPE *)&challenge_signed, CHALLENGE_SIZE, &host_pub);
-    if (memcmp(challenge_auth, challenge, CHALLENGE_SIZE) != 0)
+    rsa_encrypt((DTYPE *)&challenge_auth, MAX_MODULUS_LENGTH, (DTYPE *)&challenge_signed, MAX_MODULUS_LENGTH, &host_pub);
+    int ret = memcmp(challenge_auth, challenge, CHALLENGE_SIZE);
+    if (ret != 0)
     // if (BN_cmp((DTYPE *)&challenge_auth, MAX_MODULUS_LENGTH, (DTYPE *)&challenge, MAX_MODULUS_LENGTH) != 0)
     {
         //uart_writeb(HOST_UART, 'Y');
@@ -563,8 +570,7 @@ int main(void)
     SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
     uint8_t inItRet = EEPROMInit();
     gcm_initialize();
-    //read public key from eeprom
-    EEPROMRead(&host_pub, EEPROM_PUBLIC_KEY_ADDRESS, sizeof(rsa_pk));
+
 #ifdef MPU_ENABLED
     mpu_init();
 #endif
