@@ -56,12 +56,36 @@ def readback(socket_number, region, num_bytes):
         challenge_file.close()
 
         # call the sign binary to sign the challenge
-        os.system("./sign")
+
+
+    # rsa_key_generation_command = './host_tools/rsa/keygen'
+
+    # if not os.system(rsa_key_generation_command):
+    #     log.info("Asymetric key generation success")
+    # else:
+    #     log.info("!!!!!!!!!!!!!Asymetric key generation failed!!!!!!!!!!!!!!!!!!!!!")
+    #     return
+
+        sign_execute_command = '../host_tools/rsa/sign'
+
+        if not os.system(sign_execute_command):
+            log.info("sign the challenge success")
+        else:
+            log.info("!!!!!!!!!!!!!sign the challenge failed!!!!!!!!!!!!!!!!!!!!!")
+            return
+
+        # os.system(sign_execute_command)
 
         # send the singed challenge to the boot loader 
-        with open('challenge_signed', 'rb') as f:
-            data = f.read(16)
-            sock.send(data)
+
+        try:
+            with open('/host_tools/rsa/challenge_signed', "rb") as file:
+                # Print the success message
+                data = file.read(16)
+                sock.send(data)
+        # Raise error if the file is opened before
+        except IOError:
+            log.info("Failed to open the singed challenge.")
 
 
 
