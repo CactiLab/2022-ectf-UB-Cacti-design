@@ -145,26 +145,26 @@ void handle_readback(void)
     uart_writeb(HOST_UART, 'R');
 
 #ifdef RSA_AUTH
-    uint8_t challenge[CHALLENGE_SIZE] ={0};
+    uint8_t challenge[CHALLENGE_SIZE] = {0};
+    uint8_t challenge_signed[CHALLENGE_SIZE] = {0};
+    uint8_t challenge_auth[CHALLENGE_SIZE] = {0};
     // add verification: send challenge
     random_generate(challenge);
     // send the challenge
     uart_write(HOST_UART, challenge, CHALLENGE_SIZE);
-    // calculate the hash of the challenge
-    uint8_t output[64];
-    // MD5Calc(challenge, sizeof(challenge), output);
-    memcpy(output, challenge, sizeof(challenge));
 
+    // receive the signature from host: chellenge_signed  
+    uart_read(HOST_UART, challenge_signed, MAX_MODULUS_LENGTH * 2);
 
-    // receive the signature from host: chellenge_signed
-    uint8_t challenge_signed[16];
-    uart_read(HOST_UART, challenge_signed, 16);
-    // code here to receive from host
-    // 
-    uint8_t auth_challenge[16];
-    // authenticate the signature
-    rsa_encrypt(auth_challenge, MAX_MODULUS_LENGTH, challenge_signed, MAX_MODULUS_LENGTH, &host_pub);
-    if (!BN_cmp(auth_challenge, MAX_MODULUS_LENGTH, (DTYPE *)&output, MAX_MODULUS_LENGTH) == 0)
+    // configure the e
+    BN_init(host_pub.e, MAX_PRIME_LENGTH);
+    //e=2^CHALLENGE_SIZE+1
+    host_pub.e[MAX_PRIME_LENGTH - 2] = 1;
+    host_pub.e[MAX_PRIME_LENGTH - 1] = 1;
+
+    rsa_encrypt((DTYPE *)&challenge_auth, CHALLENGE_SIZE, (DTYPE *)&challenge_signed, CHALLENGE_SIZE, &host_pub);
+    if (memcmp(challenge_auth, challenge, CHALLENGE_SIZE) != 0)
+    // if (BN_cmp((DTYPE *)&challenge_auth, MAX_MODULUS_LENGTH, (DTYPE *)&challenge, MAX_MODULUS_LENGTH) != 0)
     {
         //uart_writeb(HOST_UART, 'Y');
         return;

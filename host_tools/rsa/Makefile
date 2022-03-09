@@ -7,9 +7,9 @@ CC = gcc
 CFLAGS = -O2 -w
 
 # set compile list
-OUTPUT1 = auth
+# OUTPUT1 = auth
 OUTPUT2 = keygen
-OUTPUT3 = test
+# OUTPUT3 = test
 OUTPUT4 = sign
 
 # all in one list

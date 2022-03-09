@@ -26,7 +26,7 @@ from util import print_banner, LOG_FORMAT
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 log = logging.getLogger(Path(__file__).name)
 
-CHALLENGE_SIZE = 16
+CHALLENGE_SIZE = 64
 
 def readback(socket_number, region, num_bytes):
     # Print Banner
@@ -48,8 +48,10 @@ def readback(socket_number, region, num_bytes):
         # add authentication: receive challenge
         log.info("Waiting for challenges number")
         cnt = 0
-        while cnt < 16:
+        challenge_receive = b''
+        while cnt < CHALLENGE_SIZE:
             challenge_receive = challenge_receive + sock.recv(1)
+            cnt = cnt + 1
             
         log.info("print out received challenge\r\n")
         log.info(challenge_receive.hex())
@@ -85,15 +87,11 @@ def readback(socket_number, region, num_bytes):
         try:
             with open('/host_tools/rsa/challenge_signed', "rb") as file:
                 # Print the success message
-                data = file.read(16)
+                data = file.read(CHALLENGE_SIZE)
                 sock.send(data)
         # Raise error if the file is opened before
         except IOError:
             log.info("Failed to open the singed challenge.")
-
-
-
-            
 
         # Send the region identifier
         log.info("Sending the region identifier to read back...")

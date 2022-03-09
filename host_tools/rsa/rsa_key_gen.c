@@ -1,27 +1,33 @@
 #ifdef _KEYGEN_
-#include<stdio.h>
-#include<time.h>
-#include<string.h>
-#include<memory.h>
-#include<stdlib.h>
-#include<stdint.h>
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <memory.h>
+#include <stdlib.h>
+#include <stdint.h>
 #include "rsa.h"
+
+// #define TEST
 
 int main(void)
 {
-	rsa_pk pk;
-	rsa_sk sk;
+    rsa_pk pk;
+    rsa_sk sk;
 
-	// char *pkey = "host_publicKey.txt";
-	// char *skey = "host_privateKey.txt";
+    // char *pkey = "host_publicKey.txt";
+    // char *skey = "host_privateKey.txt";
+#ifdef TEST
+    char *pkey_raw = "host_publicKey";
+    char *skey_raw = "host_privateKey";
+#else
     char *pkey_raw = "/host_tools/rsa/host_publicKey";
     char *skey_raw = "/host_tools/rsa/host_privateKey";
+#endif
+    FILE *fp;
 
-	FILE *fp;
-
-	printf("Key generation starts...\n");
-	rsa_key_generation(&pk, &sk);
-	printf("Key generation done...\n\n");
+    printf("Key generation starts...\n");
+    rsa_key_generation(&pk, &sk);
+    printf("Key generation done...\n\n");
 
     //write public keys into file
     // printf("Write public key...\n");
@@ -42,12 +48,11 @@ int main(void)
     fp = fopen(pkey_raw, "wb");
     fclose(fp);
     fp = fopen(pkey_raw, "a");
-    fwrite((char *)&pk.n, 1, MAX_MODULUS_LENGTH*2, fp );
-    fwrite((char *)&pk.e, 1, MAX_PRIME_LENGTH*2, fp );
-    fwrite((char *)&pk.r_mod, 1, MAX_MODULUS_LENGTH*2, fp );
-    fwrite((char *)&pk.n_inv, 1, 2, fp );
+    fwrite((char *)&pk.n, 1, MAX_MODULUS_LENGTH * 2, fp);
+    fwrite((char *)&pk.e, 1, MAX_PRIME_LENGTH * 2, fp);
+    fwrite((char *)&pk.r_mod, 1, MAX_MODULUS_LENGTH * 2, fp);
+    fwrite((char *)&pk.n_inv, 1, 2, fp);
     fclose(fp);
-
 
     //write private keys into file
     // printf("Write private key...\n");
@@ -88,23 +93,23 @@ int main(void)
     fp = fopen(skey_raw, "wb");
     fclose(fp);
     fp = fopen(skey_raw, "a");
-    fwrite((char *)&sk.n, 1, MAX_MODULUS_LENGTH*2, fp);
-    fwrite((char *)&sk.p, 1, MAX_PRIME_LENGTH*2, fp);
-    fwrite((char *)&sk.q, 1, MAX_PRIME_LENGTH*2, fp);
-    fwrite((char *)&sk.phi_n, 1, MAX_MODULUS_LENGTH*2, fp);
-    fwrite((char *)&sk.d, 1, MAX_MODULUS_LENGTH*2, fp);
-    fwrite((char *)&sk.d1, 1, MAX_PRIME_LENGTH*2, fp);
-    fwrite((char *)&sk.d2, 1, MAX_PRIME_LENGTH*2, fp);
-    fwrite((char *)&sk.p_inv, 1, MAX_PRIME_LENGTH*2, fp);
-    fwrite((char *)&sk.r_mod, 1, MAX_MODULUS_LENGTH*2, fp);
-    fwrite((char *)&sk.p_mod, 1, MAX_PRIME_LENGTH*2, fp);
-    fwrite((char *)&sk.q_mod, 1, MAX_PRIME_LENGTH*2, fp);
+    fwrite((char *)&sk.n, 1, MAX_MODULUS_LENGTH * 2, fp);
+    fwrite((char *)&sk.p, 1, MAX_PRIME_LENGTH * 2, fp);
+    fwrite((char *)&sk.q, 1, MAX_PRIME_LENGTH * 2, fp);
+    fwrite((char *)&sk.phi_n, 1, MAX_MODULUS_LENGTH * 2, fp);
+    fwrite((char *)&sk.d, 1, MAX_MODULUS_LENGTH * 2, fp);
+    fwrite((char *)&sk.d1, 1, MAX_PRIME_LENGTH * 2, fp);
+    fwrite((char *)&sk.d2, 1, MAX_PRIME_LENGTH * 2, fp);
+    fwrite((char *)&sk.p_inv, 1, MAX_PRIME_LENGTH * 2, fp);
+    fwrite((char *)&sk.r_mod, 1, MAX_MODULUS_LENGTH * 2, fp);
+    fwrite((char *)&sk.p_mod, 1, MAX_PRIME_LENGTH * 2, fp);
+    fwrite((char *)&sk.q_mod, 1, MAX_PRIME_LENGTH * 2, fp);
     fwrite((char *)&sk.n_inv, 1, 2, fp);
     fwrite((char *)&sk.p0_inv, 1, 2, fp);
     fwrite((char *)&sk.q0_inv, 1, 2, fp);
     fclose(fp);
 
-	return 0;
+    return 0;
 }
 
 #endif
