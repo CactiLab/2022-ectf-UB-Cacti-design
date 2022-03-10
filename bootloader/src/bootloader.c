@@ -118,15 +118,31 @@ void handle_boot(void)
 //     sysTimer++;
 // }
 
+// void random_generate(uint32_t *challenge)
+// {
+//     // char str[] = "0123456789abcdef";
+//     uint32_t seed = SysTickValueGet();
+//     srand(seed);
+//     for (int i = 0; i < CHALLENGE_SIZE/4; i++)
+//     {
+//         // memcpy(challenge[i], &time, sizeof(uint32_t));
+//         challenge[i] = rand();
+//     }
+// }
+
 void random_generate(uint8_t *challenge)
 {
     // char str[] = "0123456789abcdef";
-    srand(SysCtlClockGet);
+    uint32_t seed = SysTickValueGet();
+    srand(seed);
     for (int i = 0; i < CHALLENGE_SIZE; i++)
     {
-        challenge[i] = '0' + (rand() % 128);
-        // challenge[i] = rand() % 256;
+        // memcpy(challenge[i], &time, sizeof(uint32_t));
+        challenge[i] = '0' + rand() % 80;
     }
+    SysTickDisable();
+    SysTickPeriodSet(3000);
+    SysTickEnable();
 }
 #endif
 
@@ -570,6 +586,13 @@ int main(void)
     SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
     uint8_t inItRet = EEPROMInit();
     gcm_initialize();
+
+#ifdef RSA_AUTH
+    rsa_pk host_pub;
+    EEPROMRead(&host_pub, EEPROM_PUBLIC_KEY_ADDRESS, EEPROM_HOST_PUBKEY_SIZE);
+    SysTickPeriodSet(1000);
+    SysTickEnable();
+#endif
 
 #ifdef MPU_ENABLED
     mpu_init();
