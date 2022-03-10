@@ -1,6 +1,6 @@
 [submodule "bootloader/lib/tiny-AES-c"]
 	path = bootloader/lib/tiny-AES-c
 	url = https://github.com/kokke/tiny-AES-c.git
-[submodule "bootloader/mbedtls"]
+[submodule "bootloader/lib/mbedtls"]
 	path = bootloader/mbedtls
 	url = git@github.com:ARMmbed/mbedtls.git
