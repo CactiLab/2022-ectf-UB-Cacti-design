@@ -141,7 +141,7 @@ void random_generate(uint8_t *challenge)
         challenge[i] = '0' + rand() % 80;
     }
     SysTickDisable();
-    SysTickPeriodSet(3000);
+    SysTickPeriodSet(SYSTICK_HIGHEST_VALUE);
     SysTickEnable();
 }
 #endif
@@ -590,7 +590,7 @@ int main(void)
 #ifdef RSA_AUTH
     rsa_pk host_pub;
     EEPROMRead(&host_pub, EEPROM_PUBLIC_KEY_ADDRESS, EEPROM_HOST_PUBKEY_SIZE);
-    SysTickPeriodSet(1000);
+    SysTickPeriodSet(SYSTICK_HIGHEST_VALUE);
     SysTickEnable();
 #endif
 

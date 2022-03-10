@@ -66,7 +66,7 @@
 #define CFG_META_INFO (CFG_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE)
 #define MAX_RELEASE_MESSAGE_SIZE 1025
 #define CHALLENGE_SIZE 64
-
+#define SYSTICK_HIGHEST_VALUE 16777216
 typedef struct __attribute__((packed))
 {
   uint8_t FW_magic[FW_MAGIC_LEN]; // 2 bytes
