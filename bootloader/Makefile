@@ -32,7 +32,7 @@ include ${TIVA_ROOT}/makedefs
 
 # add initial firmware version
 CFLAGS+=-DOLDEST_VERSION=${OLDEST_VERSION}
-# CFLAGS+=-O2
+CFLAGS+=-O2
 CFLAGS+=-w
 
 # this rule must come first in `all`
