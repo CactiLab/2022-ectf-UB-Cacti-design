@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
 #endif
 
     sign_pk(challenge_file, challenge_signed_file);
-    auth_pk(challenge_file, challenge_signed_file);
+   // auth_pk(challenge_file, challenge_signed_file);
 
     return 0;
 }
