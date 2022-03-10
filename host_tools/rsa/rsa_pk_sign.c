@@ -66,12 +66,12 @@ int sign_pk(char *challenge_file, char *challenge_signed_file)
     fclose(fp);
 
 #ifdef DEBUG
-    printf("challenge:\n");
-    for (size_t i = 0; i < sizeof(chall); i++)
-    {
-        printf("%02x", chall[i]);
-    }
-    printf("\n");
+    // printf("challenge:\n");
+    // for (size_t i = 0; i < sizeof(chall); i++)
+    // {
+    //     printf("%02x", chall[i]);
+    // }
+    // printf("\n");
 #endif
     // printf("SHA1 of the target pk starts...\n");
     // SHA_Simple(chall, CHALLENGE_SIZE, challenge_auth);
@@ -81,12 +81,12 @@ int sign_pk(char *challenge_file, char *challenge_signed_file)
     // printf("sign the target pk digest...\n");
     rsa_decrypt((DTYPE *)&challenge_signed, MAX_MODULUS_LENGTH, (DTYPE *)&chall, MAX_MODULUS_LENGTH, &host_pri);
 #ifdef DEBUG
-    printf("challenge_signed:\n");
-    for (size_t i = 0; i < sizeof(challenge_signed); i++)
-    {
-        printf("%02x", challenge_signed[i]);
-    }
-    printf("\n");
+    // printf("challenge_signed:\n");
+    // for (size_t i = 0; i < sizeof(challenge_signed); i++)
+    // {
+    //     printf("%02x", challenge_signed[i]);
+    // }
+    // printf("\n");
 #endif
     fp = fopen(challenge_signed_file, "wb");
     if (fp == NULL)
@@ -98,7 +98,7 @@ int sign_pk(char *challenge_file, char *challenge_signed_file)
     // write pk to the file
     // fwrite(&chall, 1, sizeof(rsa_pk), fp);
     //write signed digest into file
-    printf("write challenge_signed to file:\n");
+    // printf("write challenge_signed to file:\n");
     fwrite(challenge_signed, 1, sizeof(challenge_signed), fp);
     fclose(fp);
 
@@ -167,26 +167,26 @@ int auth_pk(char *challenge_file, char *challenge_signed_file)
     fclose(fp);
 
 #ifdef DEBUG
-    printf("auth the signed challenge:\n");
-    for (size_t i = 0; i < sizeof(challenge_signed); i++)
-    {
-        printf("%02x", challenge_signed[i]);
-    }
-    printf("\n");
+    // printf("auth the signed challenge:\n");
+    // for (size_t i = 0; i < sizeof(challenge_signed); i++)
+    // {
+    //     printf("%02x", challenge_signed[i]);
+    // }
+    // printf("\n");
 #endif
 
 #ifdef DEBUG
-    printf("challenge:\n");
-    for (size_t i = 0; i < sizeof(chall); i++)
-    {
-        printf("%02x", chall[i]);
-    }
-    printf("\n");
+    // printf("challenge:\n");
+    // for (size_t i = 0; i < sizeof(chall); i++)
+    // {
+    //     printf("%02x", chall[i]);
+    // }
+    // printf("\n");
 #endif
     // SHA_Simple(chall, CHALLENGE_SIZE, challenge_auth);
     // MD5Calc(chall, CHALLENGE_SIZE, challenge_auth);
 
-    printf("auth the target string...\n");
+    // printf("auth the target string...\n");
     rsa_encrypt((DTYPE *)&challenge_auth, MAX_MODULUS_LENGTH, (DTYPE *)&challenge_signed, MAX_MODULUS_LENGTH, &host_pub);
 
 #ifdef TEST
@@ -210,22 +210,22 @@ int auth_pk(char *challenge_file, char *challenge_signed_file)
 #endif
 
 #ifdef DEBUG
-    printf("chall_auth:\n");
-    for (size_t i = 0; i < sizeof(challenge_auth); i++)
-    {
-        printf("%02x", challenge_auth[i]);
-    }
-    printf("\n");
+    // printf("chall_auth:\n");
+    // for (size_t i = 0; i < sizeof(challenge_auth); i++)
+    // {
+    //     printf("%02x", challenge_auth[i]);
+    // }
+    // printf("\n");
 #endif
     // if (BN_cmp((DTYPE *)&chall_auth, CHALLENGE_SIZE, (DTYPE *)&chall, CHALLENGE_SIZE) == 0)
-    if (memcmp(challenge_auth, chall, CHALLENGE_SIZE) == 0)
-    {
-        printf("\nAfter decryption, plaintext equal to message.\n");
-    }
-    else
-    {
-        printf("\nAfter decryption, wrong answer.\n");
-    }
+    // if (memcmp(challenge_auth, chall, CHALLENGE_SIZE) == 0)
+    // {
+    //     printf("\nAfter decryption, plaintext equal to message.\n");
+    // }
+    // else
+    // {
+    //     printf("\nAfter decryption, wrong answer.\n");
+    // }
 
     return 0;
 }

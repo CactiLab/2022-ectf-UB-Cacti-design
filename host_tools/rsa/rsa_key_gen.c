@@ -25,9 +25,9 @@ int main(void)
 #endif
     FILE *fp;
 
-    printf("Key generation starts...\n");
+    // printf("Key generation starts...\n");
     rsa_key_generation(&pk, &sk);
-    printf("Key generation done...\n\n");
+    // printf("Key generation done...\n\n");
 
     //write public keys into file
     // printf("Write public key...\n");
@@ -44,7 +44,7 @@ int main(void)
     // fputc('\n', fp);
     // fclose(fp);
 
-    printf("Write public raw key...\n");
+    // printf("Write public raw key...\n");
     fp = fopen(pkey_raw, "wb");
     fclose(fp);
     fp = fopen(pkey_raw, "a");
@@ -89,7 +89,7 @@ int main(void)
     // fputc('\n', fp);
     // fclose(fp);
 
-    printf("Write private raw key...\n");
+    // printf("Write private raw key...\n");
     fp = fopen(skey_raw, "wb");
     fclose(fp);
     fp = fopen(skey_raw, "a");
