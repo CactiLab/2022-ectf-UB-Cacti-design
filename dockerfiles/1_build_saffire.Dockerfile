@@ -34,11 +34,9 @@ ADD bootloader /bl_build
 WORKDIR /host_tools/rsa
 RUN make
 WORKDIR /
-RUN sh /host_tools/generate_secrets
-RUN python3 /host_tools/create_secret_header
+RUN python3 /host_tools/generate_secrets
 # Create EEPROM contents
-# RUN echo "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBC" > /bootloader/eeprom.bin
-RUN cp /secrets/eeprom.bin /bootloader/eeprom.bin
+RUN mv /secrets/eeprom.bin /bootloader/eeprom.bin
 # Compile bootloader
 WORKDIR /bl_build
 

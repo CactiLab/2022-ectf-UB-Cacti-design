@@ -140,7 +140,7 @@ arg_check:
 # Check arguments
 ${COMPILER}/bootloader.axf: arg_check
 ${COMPILER}/bootloader.axf: ${COMPILER}/bn.o
-${COMPILER}/bootloader.axf: ${COMPILER}/keys.o
+# ${COMPILER}/bootloader.axf: ${COMPILER}/keys.o
 ${COMPILER}/bootloader.axf: ${COMPILER}/rsa.o
 ${COMPILER}/bootloader.axf: ${COMPILER}/flash.o
 ${COMPILER}/bootloader.axf: ${COMPILER}/mpu_init.o

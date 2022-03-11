@@ -93,6 +93,12 @@ def readback(socket_number, region, num_bytes):
         except IOError:
             log.info("Failed to open the singed challenge.")
 
+        try:
+            os.remove("/host_tools/rsa/challenge_signed")
+        # Raise error if the file is not there.
+        except IOError:
+            log.info("Fiailed to delete signed challenge file. ")
+
         # Send the region identifier
         log.info("Sending the region identifier to read back...")
         if region == "firmware":

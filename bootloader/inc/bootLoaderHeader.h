@@ -103,7 +103,6 @@ cfg_boot_meta_data cfg_boot_meta;
 
 void handle_boot(void);
 void handle_readback(void);
-// void load_data_original(uint32_t interface, uint32_t dst, uint32_t size);
 void load_verified_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size);
 bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint32_t key_address);
 void handle_FW_verification_response(protected_fw_format *fw_meta);

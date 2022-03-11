@@ -3,8 +3,6 @@
 #include "bootLoaderHeader.h"
 #include "driverlib/debug.h"
 #include "driverlib/mpu.h"
-//#include "flash.h"
-// #define MPU_BASE_PTR      ((uint32_t)(0xE000ED90UL))
 
 #define MPU_RGN_SIZE_19K MPU_RGN_SIZE_16K + MPU_RGN_SIZE_2K + MPU_RGN_SIZE_1K
 #define MPU_RGN_SIZE_83K MPU_RGN_SIZE_64K + MPU_RGN_SIZE_19K
@@ -30,8 +28,6 @@ void mpu_init()
     }
     /* Disable MPU */
     MPUDisable();
-    // ARM_MPU_Disable();
-
     /*
     Configure region 0 to cover bootloader region 0x5800- 0x2b400: 151KB
     size: MPU_RGN_SIZE_151K

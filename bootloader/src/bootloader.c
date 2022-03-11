@@ -36,24 +36,6 @@
 /**
  * @brief Boot the firmware.
  */
-/*While generating secrets genereate 64 bytes of garbage that will be on block 0, put the secrect starting from location 64*/
-void eeprom_data_handling()
-{
-    uint8_t eeprom_read[EEPROM_BLOCK_SIZE];
-    // uint32_t eeprom_size = EEPROMSizeGet();
-    // uint32_t block_count =  EEPROMBlockCountGet();
-
-    EEPROMRead(eeprom_read, 0x0, sizeof(eeprom_read));                        /*EEPROM block hiding first block does not work*/
-    EEPROMRead(eeprom_read, BOOTLOADER_SECRET_DATA_PTR, sizeof(eeprom_read)); /*EEPROM block hiding*/
-    memset(eeprom_read, 0, sizeof(eeprom_read));
-    EEPROMBlockHide(EEPROM_SECRET_BLOCK_START);
-    EEPROMRead(eeprom_read, BOOTLOADER_SECRET_DATA_PTR, sizeof(eeprom_read)); /*EEPROM block hiding*/
-    uint32_t protec_ret;
-    for (uint32_t i = 0; i < 32; i++)
-    {
-        protec_ret = EEPROMBlockProtectGet(i);
-    }
-}
 
 void handle_boot(void)
 {
@@ -111,25 +93,6 @@ void handle_boot(void)
 }
 
 #ifdef RSA_AUTH
-// uint32_t sysTimer = 0;
-
-// void SysTick_Handler(void)
-// {
-//     sysTimer++;
-// }
-
-// void random_generate(uint32_t *challenge)
-// {
-//     // char str[] = "0123456789abcdef";
-//     uint32_t seed = SysTickValueGet();
-//     srand(seed);
-//     for (int i = 0; i < CHALLENGE_SIZE/4; i++)
-//     {
-//         // memcpy(challenge[i], &time, sizeof(uint32_t));
-//         challenge[i] = rand();
-//     }
-// }
-
 void random_generate(uint8_t *challenge)
 {
     // char str[] = "0123456789abcdef";
@@ -178,18 +141,10 @@ void handle_readback(void)
     // receive the signature from host: chellenge_signed
     uart_read(HOST_UART, challenge_signed, MAX_MODULUS_LENGTH * 2);
 
-    // // configure the e
-    // BN_init(host_pub.e, MAX_PRIME_LENGTH);
-    // //e=2^CHALLENGE_SIZE+1
-    // host_pub.e[MAX_PRIME_LENGTH - 2] = 1;
-    // host_pub.e[MAX_PRIME_LENGTH - 1] = 1;
-
     rsa_encrypt((DTYPE *)&challenge_auth, MAX_MODULUS_LENGTH, (DTYPE *)&challenge_signed, MAX_MODULUS_LENGTH, &host_pub);
     int ret = memcmp(challenge_auth, challenge, CHALLENGE_SIZE);
     if (ret != 0)
-    // if (BN_cmp((DTYPE *)&challenge_auth, MAX_MODULUS_LENGTH, (DTYPE *)&challenge, MAX_MODULUS_LENGTH) != 0)
     {
-        //uart_writeb(HOST_UART, 'Y');
         return;
     }
 #endif
@@ -418,7 +373,6 @@ void handle_update(void)
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
     }
-    //  ret = aes_gcm_decrypt_auth(output, version_cipher_data, VERSION_CIPHER_SIZE, keyv, AES_KEY_LEN, &fw_meta.IVf, IV_SIZE, &fw_meta.tagv, TAG_SIZE);
 
     if (ret != 0)
     {
@@ -426,8 +380,6 @@ void handle_update(void)
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
     }
-    // Clear the version number key
-    //  memset(keyv, 0, AES_KEY_LEN);
 
     // Acknowledge version data verification success
     uart_writeb(HOST_UART, FRAME_OK);
@@ -529,12 +481,6 @@ void handle_configure(void)
     // Acknowledge magic number verification
     uart_writeb(HOST_UART, FRAME_OK);
 
-    // // Receive size
-    // size = (((uint32_t)uart_readb(HOST_UART)) << 24);
-    // size |= (((uint32_t)uart_readb(HOST_UART)) << 16);
-    // size |= (((uint32_t)uart_readb(HOST_UART)) << 8);
-    // size |= ((uint32_t)uart_readb(HOST_UART));
-
     flash_erase_page(CONFIGURATION_METADATA_PTR);
     flash_write_word(cfg_meta.CFG_size, CONFIGURATION_SIZE_PTR);
 
@@ -542,7 +488,6 @@ void handle_configure(void)
 
     // Retrieve configuration
     handle_CFG_verification_response(&cfg_meta);
-    // load_data_original(HOST_UART, CONFIGURATION_STORAGE_PTR, size);
     memcpy(&cfg_boot_meta.IVc, &cfg_meta.IVc, IV_SIZE);
     memcpy(&cfg_boot_meta.tagc, &cfg_meta.tagc, TAG_SIZE);
     uart_writeb(HOST_UART, FRAME_OK); /*remove this later*/
