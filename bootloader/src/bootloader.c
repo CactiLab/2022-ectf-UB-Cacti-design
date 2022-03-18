@@ -343,7 +343,6 @@ bool check_FW_magic(protected_fw_format *fw_meta)
 void handle_update(void)
 {
     // metadata
-    int ret = 0;
     uint32_t current_version;
     uint32_t rel_msg_size = 0;
     uint8_t rel_msg[MAX_RELEASE_MESSAGE_SIZE]; // 1024 + terminator
@@ -370,13 +369,6 @@ void handle_update(void)
 
     if (!verify_saffire_cipher(VERSION_CIPHER_SIZE, version_cipher_data, output, &(fw_meta.IVf), &(fw_meta.tagv), (uint32_t)EEPROM_KEYV_ADDRESS))
     {
-        uart_writeb(HOST_UART, FRAME_BAD);
-        return;
-    }
-
-    if (ret != 0)
-    {
-        // Authentication failure of version data
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
     }
