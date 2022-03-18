@@ -2,7 +2,7 @@
 #define BOOT_LOADER_HEADER
 
 /* macros */
-#define MPU_ENABLED
+// #define MPU_ENABLED
 #define RSA_AUTH
 #include "../lib/rsa/keys.h"
 // Storage layout

@@ -18,6 +18,12 @@ RUN apt-get update && apt-get upgrade -y && \
     binutils-arm-none-eabi gcc-arm-none-eabi make && \
     apt-get -y install python3-pip
 
+RUN apt-get install wget -y
+RUN wget https://ughe.github.io/data/2018/ld-linux-aarch64.so.1
+RUN wget https://ughe.github.io/data/2018/libc.so.6
+RUN mv ld-linux-aarch64.so.1 /lib/
+RUN mv libc.so.6 /lib64/
+
 #install pycrypto
 RUN pip3 install pycryptodome
 # Create bootloader binary folder

@@ -3,8 +3,8 @@ SRCS = $(wildcard *.c)
 OBJS = $(SRCS: .c = .o)
 
 # set compiler
-CC = gcc
-CFLAGS = -O2 -w
+CC = x86_64-linux-gnu-gcc
+CFLAGS = -O2 -w -m32 -static
 
 # set compile list
 # OUTPUT1 = auth
