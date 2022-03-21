@@ -46,58 +46,50 @@ def readback(socket_number, region, num_bytes):
         while sock.recv(1) != b"R":
             pass
         # add authentication: receive challenge
-        log.info("Waiting for challenges number")
-        cnt = 0
-        challenge_receive = b''
-        while cnt < CHALLENGE_SIZE:
-            challenge_receive = challenge_receive + sock.recv(1)
-            cnt = cnt + 1
+
+        # log.info("Waiting for challenges number")
+        # cnt = 0
+        # challenge_receive = b''
+        # while cnt < CHALLENGE_SIZE:
+        #     challenge_receive = challenge_receive + sock.recv(1)
+        #     cnt = cnt + 1
             
-        # log.info("print out received challenge\r\n")
-        # log.info(challenge_receive.hex())
+        # # log.info("print out received challenge\r\n")
+        # # log.info(challenge_receive.hex())
 
-        # save it to the challenge filestr
-        challenge_file = open("/host_tools/rsa/challenge", "wb")
-        challenge_file.write(challenge_receive)
-        challenge_file.close()
+        # # save it to the challenge filestr
+        # challenge_file = open("/host_tools/rsa/challenge", "wb")
+        # challenge_file.write(challenge_receive)
+        # challenge_file.close()
 
-        # call the sign binary to sign the challenge
+        # # call the sign binary to sign the challenge
 
+        # sign_execute_command = '../host_tools/rsa/sign'
 
-    # rsa_key_generation_command = './host_tools/rsa/keygen'
+        # if not os.system(sign_execute_command):
+        #     log.info("sign the challenge success")
+        # else:
+        #     log.info("!!!!!!!!!!!!!sign the challenge failed!!!!!!!!!!!!!!!!!!!!!")
+        #     return
 
-    # if not os.system(rsa_key_generation_command):
-    #     log.info("Asymetric key generation success")
-    # else:
-    #     log.info("!!!!!!!!!!!!!Asymetric key generation failed!!!!!!!!!!!!!!!!!!!!!")
-    #     return
+        # # os.system(sign_execute_command)
 
-        sign_execute_command = '../host_tools/rsa/sign'
+        # # send the singed challenge to the boot loader 
 
-        if not os.system(sign_execute_command):
-            log.info("sign the challenge success")
-        else:
-            log.info("!!!!!!!!!!!!!sign the challenge failed!!!!!!!!!!!!!!!!!!!!!")
-            return
+        # try:
+        #     with open('/host_tools/rsa/challenge_signed', "rb") as file:
+        #         # Print the success message
+        #         data = file.read(CHALLENGE_SIZE)
+        #         sock.send(data)
+        # # Raise error if the file is opened before
+        # except IOError:
+        #     log.info("Failed to open the singed challenge.")
 
-        # os.system(sign_execute_command)
-
-        # send the singed challenge to the boot loader 
-
-        try:
-            with open('/host_tools/rsa/challenge_signed', "rb") as file:
-                # Print the success message
-                data = file.read(CHALLENGE_SIZE)
-                sock.send(data)
-        # Raise error if the file is opened before
-        except IOError:
-            log.info("Failed to open the singed challenge.")
-
-        try:
-            os.remove("/host_tools/rsa/challenge_signed")
-        # Raise error if the file is not there.
-        except IOError:
-            log.info("Fiailed to delete signed challenge file. ")
+        # try:
+        #     os.remove("/host_tools/rsa/challenge_signed")
+        # # Raise error if the file is not there.
+        # except IOError:
+        #     log.info("Fiailed to delete signed challenge file. ")
 
         # Send the region identifier
         log.info("Sending the region identifier to read back...")
