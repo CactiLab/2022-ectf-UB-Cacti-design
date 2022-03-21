@@ -199,9 +199,10 @@ void handle_readback(void)
     size |= ((uint32_t)uart_readb(HOST_UART)) << 16;
     size |= ((uint32_t)uart_readb(HOST_UART)) << 8;
     size |= (uint32_t)uart_readb(HOST_UART);
-
+    uint8_t send_readback_data[size];
+    memcpy(send_readback_data, readback_data, size);
     // Read out the memory
-    uart_write(HOST_UART, readback_data, size);
+    uart_write(HOST_UART, send_readback_data, size);
 #ifdef MPU_ENABLED
     if (mpu_change_ap_flag != 0)
         MPURegionDisable(mpu_change_ap_flag);
