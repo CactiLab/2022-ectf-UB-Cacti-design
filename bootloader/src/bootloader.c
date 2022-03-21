@@ -33,6 +33,8 @@
 #include "aes.h"
 #endif
 
+bool fw_udpated = false;
+bool cfg_updated = false;
 /**
  * @brief Boot the firmware.
  */
@@ -118,7 +120,7 @@ void handle_readback(void)
     uint8_t *address;
     uint32_t size = 0;
     uint32_t total_size;
-    uint8_t readback_data[*((uint32_t *)FIRMWARE_SIZE_PTR) > *((uint32_t *)CONFIGURATION_SIZE_PTR) ? *((uint32_t *)FIRMWARE_SIZE_PTR) : *((uint32_t *)CONFIGURATION_SIZE_PTR)];
+    uint8_t readback_data[(*((uint32_t *)FIRMWARE_SIZE_PTR) > *((uint32_t *)CONFIGURATION_SIZE_PTR) && fw_udpated) ? *((uint32_t *)FIRMWARE_SIZE_PTR) : *((uint32_t *)CONFIGURATION_SIZE_PTR)];
 #ifdef MPU_ENABLED
     uint32_t mpu_change_ap_flag = 0;
 #endif
@@ -446,6 +448,7 @@ void handle_update(void)
     handle_FW_verification_response(&fw_meta);
     memcpy(&boot_meta.IVf, &fw_meta.IVf, IV_SIZE);
     memcpy(&boot_meta.tagf, &fw_meta.tagf, TAG_SIZE);
+    fw_udpated = true;
 }
 
 bool check_CFG_magic(protected_cfg_format *cfg_meta)
@@ -484,6 +487,7 @@ void handle_configure(void)
     memcpy(&cfg_boot_meta.IVc, &cfg_meta.IVc, IV_SIZE);
     memcpy(&cfg_boot_meta.tagc, &cfg_meta.tagc, TAG_SIZE);
     uart_writeb(HOST_UART, FRAME_OK); /*remove this later*/
+    cfg_updated = true;
 }
 
 /**
