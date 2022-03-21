@@ -30,7 +30,7 @@ CHALLENGE_SIZE = 64
 
 def readback(socket_number, region, num_bytes):
     # Print Banner
-    print_banner("SAFFIRe Memory Readback Tool")
+    # print_banner("SAFFIRe Memory Readback Tool")
 
     # Connect to the bootoader
     log.info("Connecting socket...")
