@@ -3,7 +3,7 @@
 
 /* macros */
 #define MPU_ENABLED
-#define RSA_AUTH
+// #define RSA_AUTH
 #include "../lib/rsa/keys.h"
 // Storage layout
 
