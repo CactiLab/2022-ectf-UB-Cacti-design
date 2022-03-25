@@ -3,6 +3,7 @@ import os
 import math
 from Crypto.Cipher import AES
 
+FILE_NAME = 'file'
 AES_KEY_SIZE = 32
 IV_SIZE = 12
 BLOCK_SIZE = 8192
@@ -22,7 +23,7 @@ def main():
     write_key_bin(key, 'key.bin')
     write_key_bin(iv, 'iv.bin')
 
-    with open("newfile", "rb") as file:
+    with open(FILE_NAME, "rb") as file:
         data = file.read()
     cipher = AES.new(key, AES.MODE_GCM, nonce=iv)
     print(data[0:2].hex())

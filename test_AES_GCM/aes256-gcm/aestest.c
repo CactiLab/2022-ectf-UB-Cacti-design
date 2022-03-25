@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -7,6 +8,7 @@
 #define GCM 1
 #define AES256
 #define msg_size 15200
+#define MAX_BLOCK_SIZE 8192
 
 #include "gcm.h"
 #include "aestest.h"
@@ -187,6 +189,30 @@ CT = fa4362189661d163fcd6a56d8bf0405a
 Tag = d636ac1bbedd5cc3ee727dc2ab4a9489
 */
 
+
+// C program to find the size of file
+long int findSize(char file_name[])
+{
+    // opening the file in read mode
+    FILE* fp = fopen(file_name, "r");
+  
+    // checking if the file exist or not
+    if (fp == NULL) {
+        printf("File Not Found!\n");
+        return -1;
+    }
+  
+    fseek(fp, 0L, SEEK_END);
+  
+    // calculating the size of the file
+    long int res = ftell(fp);
+  
+    // closing the file
+    fclose(fp);
+  
+    return res;
+}
+
 int main(void)
 {
     // int exit;
@@ -213,6 +239,7 @@ int main(void)
     return 0;
 #endif
     FILE *ptr = NULL;
+    FILE *tag_file = NULL;
     uint8_t key[32];
     uint8_t fw_magic [2];
     uint8_t prot_fw [1500];
@@ -222,6 +249,21 @@ int main(void)
     uint8_t cipher[65536];
     uint8_t output[65536];
     printf("OK\n");
+
+    char file_name[] = {"file"};
+    long int size = findSize(file_name);
+    if (size != -1)
+        printf("Size of the file is %ld bytes \n", size);
+    int blocks = ceil(size / (double)MAX_BLOCK_SIZE);
+    printf("Number of blocks: %d \n", blocks);
+
+    tag_file = fopen("tag.bin","rb");  // r for read, b for binary
+    if (tag_file == NULL)
+    {
+    	printf("FIle tag failed to open");
+    }
+    printf("OK\n");
+    
     ptr = fopen("cipher.bin","rb");  // r for read, b for binary
     if (ptr == NULL)
     {
@@ -244,20 +286,12 @@ int main(void)
     {
     	printf("FIle iv failed to open");
     }
-    printf("OK\n");
-    fread(iv, 12, 1, ptr); 
-
-    ptr = fopen("tag.bin","rb");  // r for read, b for binary
-    if (ptr == NULL)
-    {
-    	printf("FIle tag failed to open");
-    }
     printf("OK\n\n");
-    fread(tag, 16, 1, ptr);
+    fread(iv, 12, 1, ptr); 
     
     gcm_initialize();
 
-     ptr = fopen("newfile","rb");  // r for read, b for binary
+    ptr = fopen(file_name,"rb");  // r for read, b for binary
     if (ptr == NULL)
     {
     	printf("FIle tag failed to open");
@@ -272,22 +306,48 @@ int main(void)
     // else{
     //      printf("SUCCESS!\n");
     // }
+
     uint8_t partial[8192];
-    for (int i = 0; i < 8;i++)
+    int block_size;
+    for (int i = 0; i < blocks; i++)
     {
-        // printf("cipher\n");
-        // phex( &cipher[i * 8192], 16);
-        ret = aes_gcm_decrypt_auth(partial, &cipher[i * 8192], 8192, key, 32, iv, 12, tag, 16);
-        if (memcmp(partial, &output[i * 8192], 8192) != 0 )
+        fread(tag, 16, 1, tag_file);
+        if (i == blocks - 1)
+        {
+            block_size = size - i * 8192;
+        }
+        else
+        {
+            block_size = 8192;
+        }
+        ret = aes_gcm_decrypt_auth(partial, &cipher[i * 8192], block_size, key, 32, iv, 12, tag, 16);
+        printf("Return value: %d \n", ret);
+        if (memcmp(partial, &output[i * 8192], block_size) != 0 )
         {
             printf("Does not match\n");
-
         }
         else {
             printf("Match\n");
         }
-
+        
     }
+    
+
+    // for (int i = 0; i < 8;i++)
+    // {
+    //     // printf("cipher\n");
+    //     // phex( &cipher[i * 8192], 16);
+    //     ret = aes_gcm_decrypt_auth(partial, &cipher[i * 8192], 8192, key, 32, iv, 12, tag, 16);
+    //     if (memcmp(partial, &output[i * 8192], 8192) != 0 )
+    //     {
+    //         printf("Does not match\n");
+
+    //     }
+    //     else {
+    //         printf("Match\n");
+    //     }
+
+    // }
 
 
     return ret;
