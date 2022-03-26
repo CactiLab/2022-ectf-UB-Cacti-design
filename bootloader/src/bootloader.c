@@ -300,6 +300,37 @@ bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, u
     // Firmware data aunthentication success
     return true;
 }
+
+bool new_verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint32_t key_address)
+{
+    int ret = 0;
+    uint8_t key[AES_KEY_LEN];
+    // Get keyf from eeprom
+    EEPROMRead(key, key_address, AES_KEY_LEN);
+
+    int blocks = (size + (MAX_BLOCK_SIZE - 1)) / (double)MAX_BLOCK_SIZE;
+    int block_size;
+    for (int i = 0; i < blocks; i++)
+    {
+        if (i == blocks - 1)
+        {
+            block_size = size - i * MAX_BLOCK_SIZE;
+        }
+        else
+        {
+            block_size = MAX_BLOCK_SIZE;
+        }
+        ret = aes_gcm_decrypt_auth(plaintext, &cipher[i * MAX_BLOCK_SIZE], block_size, key, AES_KEY_LEN, IV, IV_SIZE, &tag[i * TAG_SIZE], TAG_SIZE);
+        if (ret != 0)
+        {
+            // Authentication failure of version data
+            return false;
+        }
+    }
+    // Firmware data aunthentication success
+    return true;
+}
+
 void handle_FW_verification_response(protected_fw_format *fw_meta)
 {
     int i;

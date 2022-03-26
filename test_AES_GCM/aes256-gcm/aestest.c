@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <math.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -254,7 +253,7 @@ int main(void)
     long int size = findSize(file_name);
     if (size != -1)
         printf("Size of the file is %ld bytes \n", size);
-    int blocks = ceil(size / (double)MAX_BLOCK_SIZE);
+    int blocks = (size + (MAX_BLOCK_SIZE - 1)) / (double)MAX_BLOCK_SIZE;
     printf("Number of blocks: %d \n", blocks);
 
     tag_file = fopen("tag.bin","rb");  // r for read, b for binary
