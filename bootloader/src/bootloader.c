@@ -308,7 +308,7 @@ bool new_verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintex
     // Get keyf from eeprom
     EEPROMRead(key, key_address, AES_KEY_LEN);
 
-    int blocks = (size + (MAX_BLOCK_SIZE - 1)) / (double)MAX_BLOCK_SIZE;
+    int blocks = (size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
     int block_size;
     for (int i = 0; i < blocks; i++)
     {
