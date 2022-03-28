@@ -283,25 +283,25 @@ void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
     }
 }
 
+// bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint32_t key_address)
+// {
+//     int ret = 0;
+//     uint8_t key[AES_KEY_LEN];
+//     // Get keyf from eeprom
+//     EEPROMRead(key, key_address, AES_KEY_LEN);
+//     // gcm_initialize();
+//     ret = aes_gcm_decrypt_auth(plaintext, cipher, size, key, AES_KEY_LEN, IV, IV_SIZE, tag, TAG_SIZE);
+
+//     if (ret != 0)
+//     {
+//         // Authentication failure of version data
+//         return false;
+//     }
+//     // Firmware data aunthentication success
+//     return true;
+// }
+
 bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint32_t key_address)
-{
-    int ret = 0;
-    uint8_t key[AES_KEY_LEN];
-    // Get keyf from eeprom
-    EEPROMRead(key, key_address, AES_KEY_LEN);
-    // gcm_initialize();
-    ret = aes_gcm_decrypt_auth(plaintext, cipher, size, key, AES_KEY_LEN, IV, IV_SIZE, tag, TAG_SIZE);
-
-    if (ret != 0)
-    {
-        // Authentication failure of version data
-        return false;
-    }
-    // Firmware data aunthentication success
-    return true;
-}
-
-bool new_verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint32_t key_address)
 {
     int ret = 0;
     uint8_t key[AES_KEY_LEN];

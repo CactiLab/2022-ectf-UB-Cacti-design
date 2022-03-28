@@ -29,7 +29,7 @@ MAX_BLOCK_SIZE = 8192
 cfg_key_path = "/secrets/keyc.bin"
 # cfg_key_path = "keyc.bin"
 
-def new_encrypt_cfg_data(ivc, cfg_data):
+def encrypt_cfg_data(ivc, cfg_data):
     cfg_ciphertext = b''
     tagc = b''
     try:
@@ -53,27 +53,27 @@ def new_encrypt_cfg_data(ivc, cfg_data):
         log.info("Failed to open the file: " + cfg_key_path)
 
 
-def encrypt_cfg_data(ivc, cfg_data):
-    try:
-        with open(cfg_key_path, "rb") as file:
-            # Print the success message
-            key_c = file.read()
-            # log.info("KEY c: ")
-            # log.info(key_c.hex())
-            # log.info("KEY IVc: ")
-            # log.info(ivc.hex())
-            # log.info("cfg_data:")
-            # log.info(cfg_data.hex())
-            cipher = AES.new(key_c, AES.MODE_GCM, nonce=ivc)
-            cfg_ciphertext, tagc = cipher.encrypt_and_digest(cfg_data)
-            # log.info("cfg_data cipher:")
-            # log.info(cfg_ciphertext.hex())
-            # log.info("cfg tag:")
-            # log.info(tagc.hex())
-            return cfg_ciphertext, tagc
-    # Raise error if the file is opened before
-    except IOError:
-        log.info("Failed to open the file: " + cfg_key_path)
+# def encrypt_cfg_data(ivc, cfg_data):
+#     try:
+#         with open(cfg_key_path, "rb") as file:
+#             # Print the success message
+#             key_c = file.read()
+#             # log.info("KEY c: ")
+#             # log.info(key_c.hex())
+#             # log.info("KEY IVc: ")
+#             # log.info(ivc.hex())
+#             # log.info("cfg_data:")
+#             # log.info(cfg_data.hex())
+#             cipher = AES.new(key_c, AES.MODE_GCM, nonce=ivc)
+#             cfg_ciphertext, tagc = cipher.encrypt_and_digest(cfg_data)
+#             # log.info("cfg_data cipher:")
+#             # log.info(cfg_ciphertext.hex())
+#             # log.info("cfg tag:")
+#             # log.info(tagc.hex())
+#             return cfg_ciphertext, tagc
+#     # Raise error if the file is opened before
+#     except IOError:
+#         log.info("Failed to open the file: " + cfg_key_path)
 
 
 def protect_configuration(raw_cfg: Path, protected_cfg: Path):

@@ -83,7 +83,7 @@ typedef struct __attribute__((packed))
   uint8_t CFG_magic[CFG_MAGIC_LEN]; // 3 bytes
   uint32_t CFG_size; // 4 bytes (3 + 4)
   uint8_t IVc[IV_SIZE]; // 12 bytes -> 19
-  uint8_t tagc[TAG_SIZE]; // 16 bytes -> 35
+  uint8_t tagc[TAG_SIZE*8]; // 16*8 bytes -> 147
 } protected_cfg_format;
 
 typedef struct __attribute__((packed))
