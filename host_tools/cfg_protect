@@ -46,7 +46,8 @@ def encrypt_cfg_data(ivc, cfg_data):
                 cfg_cipher_partial, tagc_partial = cipher.encrypt_and_digest(partial_data)
                 cfg_ciphertext += cfg_cipher_partial
                 tagc += tagc_partial
-            tagc = tagc.ljust((8 - blocks), b'\0')
+            tagc = tagc.ljust(((8  - blocks) * 16), b'\0')
+            log.info("should have padding")
             
             log.info(tagc.hex())
             log.info("cipher 100:")
