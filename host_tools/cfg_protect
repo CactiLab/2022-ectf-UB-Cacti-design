@@ -26,6 +26,8 @@ log = logging.getLogger(Path(__file__).name)
 CFG_MAGIC = b'CFG'
 IV_SIZE = 12
 MAX_BLOCK_SIZE = 8192
+TAG_SIZE = 16
+MAX_TAG_NUM = 8
 cfg_key_path = "/secrets/keyc.bin"
 # cfg_key_path = "keyc.bin"
 
@@ -47,7 +49,7 @@ def encrypt_cfg_data(ivc, cfg_data):
                 cfg_ciphertext += cfg_cipher_partial
                 tagc += tagc_partial
             
-            tagc = tagc.ljust(((9  - blocks) * 16), b'\0')
+            tagc += b'\0' * (MAX_TAG_NUM - blocks) * TAG_SIZE
             log.info(f"blcoks: {blocks}")
             log.info("should have padding")
             
