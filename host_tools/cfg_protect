@@ -42,11 +42,15 @@ def encrypt_cfg_data(ivc, cfg_data):
                     partial_data = cfg_data[MAX_BLOCK_SIZE * x:]
                 else:
                     partial_data = cfg_data[MAX_BLOCK_SIZE * x: MAX_BLOCK_SIZE * (x+1)]
-            cipher = AES.new(key_c, AES.MODE_GCM, nonce=ivc)
-            cfg_cipher_partial, tagc_partial = cipher.encrypt_and_digest(partial_data)
-            cfg_ciphertext += cfg_cipher_partial
-            tagc += tagc_partial
+                cipher = AES.new(key_c, AES.MODE_GCM, nonce=ivc)
+                cfg_cipher_partial, tagc_partial = cipher.encrypt_and_digest(partial_data)
+                cfg_ciphertext += cfg_cipher_partial
+                tagc += tagc_partial
+            tagc = tagc.ljust((8 - blocks), b'\0')
             
+            log.info(tagc.hex())
+            log.info("cipher 100:")
+            log.info(cfg_ciphertext[:100].hex())
             return cfg_ciphertext, tagc
     # Raise error if the file is opened before
     except IOError:

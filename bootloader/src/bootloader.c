@@ -76,7 +76,7 @@ void handle_boot(void)
         *((uint8_t *)(FIRMWARE_BOOT_PTR + i)) = FW_plaintext[i];
     }
     // write cfg data as plain text
-    load_verified_data_on_flash(cfg_plaintext, CONFIGURATION_STORAGE_PTR, cfg_size);
+    load_data_on_flash(cfg_plaintext, CONFIGURATION_STORAGE_PTR, cfg_size);
 
     uart_writeb(HOST_UART, 'M');
 
@@ -219,7 +219,7 @@ void handle_readback(void)
  * @param size is the number of bytes to load.
  */
 
-void load_verified_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size)
+void load_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size)
 {
     int i;
     uint32_t indx = 0;
@@ -251,36 +251,69 @@ void load_verified_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size)
 void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
 {
     int i;
-    uint32_t frame_size, current_indx = 0;
+    uint32_t frame_size;
     uint32_t c_size = cfg_meta->CFG_size;
-    uint8_t cfg_plaintext[c_size];
-    uint8_t cfg_cipher[c_size];
+    uint32_t dst = CONFIGURATION_STORAGE_PTR;
+    uint8_t cfg_plaintext[MAX_BLOCK_SIZE];
+    // uint8_t cfg_cipher[MAX_BLOCK_SIZE];
     uint8_t page_buffer[FLASH_PAGE_SIZE];
 
-    while (c_size > 0)
-    {
+    while(c_size > 0) {
         // calculate frame size
         frame_size = c_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : c_size;
         // read frame into buffer
         uart_read(HOST_UART, page_buffer, frame_size);
-        memcpy(&cfg_cipher[current_indx], page_buffer, frame_size);
+        // pad buffer if frame is smaller than the page
+        for(i = frame_size; i < FLASH_PAGE_SIZE; i++) {
+            page_buffer[i] = 0xFF;
+        }
+        // clear flash page
+        flash_erase_page(dst);
+        // write flash page
+        flash_write((uint32_t *)page_buffer, dst, FLASH_PAGE_SIZE >> 2);
+        // next page and decrease size
+        dst += FLASH_PAGE_SIZE;
         c_size -= frame_size;
-        current_indx += frame_size;
         // send frame ok
         uart_writeb(HOST_UART, FRAME_OK);
     }
-    // read encrypted cfg cipher
-    if (verify_saffire_cipher(cfg_meta->CFG_size, cfg_cipher, cfg_plaintext, &(cfg_meta->IVc), &(cfg_meta->tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
+
+    c_size = cfg_meta->CFG_size;
+    int blocks = (c_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
+    int block_size;
+    uint8_t *cipher_ptr = (uint8_t *)CONFIGURATION_STORAGE_PTR;
+    if (!verify_saffire_cipher(c_size, cipher_ptr, cfg_plaintext, &(cfg_meta->IVc), &(cfg_meta->tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
     {
-        memset(cfg_plaintext, 0, cfg_meta->CFG_size);
-        load_verified_data_on_flash(cfg_cipher, CONFIGURATION_STORAGE_PTR, cfg_meta->CFG_size);
-        uart_writeb(HOST_UART, FRAME_OK);
-    }
-    else
-    {
-        /*configuration data verification failed notification*/
+        flash_erase_page(CONFIGURATION_STORAGE_PTR);
         uart_writeb(HOST_UART, FRAME_BAD);
-    }
+        return;
+    }   
+    uart_writeb(HOST_UART, FRAME_OK);
+
+    // while (c_size > 0)
+    // {
+    //     // calculate frame size
+    //     frame_size = c_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : c_size;
+    //     // read frame into buffer
+    //     uart_read(HOST_UART, page_buffer, frame_size);
+    //     memcpy(&cfg_cipher[current_indx], page_buffer, frame_size);
+    //     c_size -= frame_size;
+    //     current_indx += frame_size;
+    //     // send frame ok
+    //     uart_writeb(HOST_UART, FRAME_OK);
+    // }
+    // // read encrypted cfg cipher
+    // if (verify_saffire_cipher(cfg_meta->CFG_size, cfg_cipher, cfg_plaintext, &(cfg_meta->IVc), &(cfg_meta->tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
+    // {
+    //     memset(cfg_plaintext, 0, cfg_meta->CFG_size);
+    //     load_data_on_flash(cfg_cipher, CONFIGURATION_STORAGE_PTR, cfg_meta->CFG_size);
+    //     uart_writeb(HOST_UART, FRAME_OK);
+    // }
+    // else
+    // {
+    //     /*configuration data verification failed notification*/
+    //     uart_writeb(HOST_UART, FRAME_BAD);
+    // }
 }
 
 // bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint32_t key_address)
@@ -356,7 +389,7 @@ void handle_FW_verification_response(protected_fw_format *fw_meta)
     if (verify_saffire_cipher(fw_meta->FW_size, FW_cipher, FW_plaintext, &(fw_meta->IVf), &(fw_meta->tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
     {
         memset(FW_plaintext, 0, fw_meta->FW_size);
-        load_verified_data_on_flash(FW_cipher, FIRMWARE_STORAGE_PTR, fw_meta->FW_size);
+        load_data_on_flash(FW_cipher, FIRMWARE_STORAGE_PTR, fw_meta->FW_size);
         uart_writeb(HOST_UART, FRAME_OK);
     }
     else

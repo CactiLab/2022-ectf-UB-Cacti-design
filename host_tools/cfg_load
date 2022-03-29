@@ -22,7 +22,7 @@ from util import print_banner, send_packets, RESP_OK, CONFIGURATION_ROOT, LOG_FO
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 log = logging.getLogger(Path(__file__).name)
 
-CFG_META_INFO_SIZE = 35
+CFG_META_INFO_SIZE = 147
 
 def load_configuration(socket_number: int, config_file: Path):
     print_banner("SAFFIRe Configuration Tool")

@@ -64,7 +64,7 @@
 #define AES_KEY_LEN 32
 #define MAX_BLOCK_SIZE 8192
 #define FW_META_INFO (FW_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE)
-#define CFG_META_INFO (CFG_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE)
+#define CFG_META_INFO (CFG_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE*8)
 #define MAX_RELEASE_MESSAGE_SIZE 1025
 #define CHALLENGE_SIZE 64
 #define SYSTICK_HIGHEST_VALUE 16777216
@@ -104,8 +104,9 @@ cfg_boot_meta_data cfg_boot_meta;
 
 void handle_boot(void);
 void handle_readback(void);
-void load_verified_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size);
+void load_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size);
 bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint32_t key_address);
+bool new_verify_saffire_cipher(uint32_t size, uint32_t cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint32_t key_address);
 void handle_FW_verification_response(protected_fw_format *fw_meta);
 bool check_FW_magic(protected_fw_format *fw_meta);
 bool check_CFG_magic(protected_cfg_format *cfg_meta);
