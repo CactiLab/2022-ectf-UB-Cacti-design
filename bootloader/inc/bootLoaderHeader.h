@@ -92,13 +92,13 @@ typedef struct __attribute__((packed))
 typedef struct __attribute__((packed))
 {
   uint8_t IVc[IV_SIZE]; // 12 bytes -> 18
-  uint8_t tagc[TAG_SIZE * MAX_TAG_NUM];
+  uint8_t tagc[TAG_SIZE * MAX_CFG_TAG_NUM];
 } cfg_boot_meta_data;
 
 typedef struct __attribute__((packed))
 {
   uint8_t IVf[IV_SIZE]; // 12 bytes -> 18
-  uint8_t tagf[TAG_SIZE];
+  uint8_t tagf[TAG_SIZE * MAX_FW_TAG_NUM];
 } fw_boot_meta_data;
 
 fw_boot_meta_data boot_meta;

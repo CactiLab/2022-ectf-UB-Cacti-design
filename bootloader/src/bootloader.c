@@ -120,7 +120,7 @@ void handle_readback(void)
     uint8_t *address;
     uint32_t size = 0;
     uint32_t total_size;
-    uint8_t readback_data[100];
+    uint8_t readback_data[MAX_BLOCK_SIZE];
 #ifdef MPU_ENABLED
     uint32_t mpu_change_ap_flag = 0;
 #endif
@@ -205,11 +205,11 @@ void handle_readback(void)
     int blocks = (total_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
     int block_size;
     
-    for (int i = 0; i < blocks; i++)
+    for (int i = 0; i < blocks && size > 0; i++)
     {
         if (i == blocks - 1)
         {
-            block_size = size - i * MAX_BLOCK_SIZE;
+            block_size = total_size - i * MAX_BLOCK_SIZE;
         }
         else
         {
@@ -221,7 +221,8 @@ void handle_readback(void)
             verify_saffire_cipher(block_size, address, readback_data, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS);
 
         uart_write(HOST_UART, readback_data, block_size < size ? block_size : size);
-        
+        size -= block_size;
+
     }
     // Read out the memory
 #ifdef MPU_ENABLED
@@ -531,7 +532,7 @@ void handle_update(void)
     // Retrieve firmware
     handle_FW_verification_response(&fw_meta);
     memcpy(&boot_meta.IVf, &fw_meta.IVf, IV_SIZE);
-    memcpy(&boot_meta.tagf, &fw_meta.tagf, TAG_SIZE);
+    memcpy(&boot_meta.tagf, &fw_meta.tagf, TAG_SIZE * MAX_FW_TAG_NUM);
     fw_udpated = true;
 }
 
