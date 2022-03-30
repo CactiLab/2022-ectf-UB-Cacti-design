@@ -324,37 +324,81 @@ bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, u
 void handle_FW_verification_response(protected_fw_format *fw_meta)
 {
     int i;
-    uint32_t frame_size, current_indx = 0;
+    uint32_t frame_size;
     uint32_t f_size = fw_meta->FW_size;
-    uint8_t FW_plaintext[f_size];
-    uint8_t FW_cipher[f_size];
+    uint32_t dst = FIRMWARE_STORAGE_PTR;
+    uint8_t fw_plaintext[MAX_BLOCK_SIZE];
+    // uint8_t FW_cipher[f_size];
     uint8_t page_buffer[FLASH_PAGE_SIZE];
 
-    while (f_size > 0)
-    {
+    while(f_size > 0) {
         // calculate frame size
         frame_size = f_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : f_size;
         // read frame into buffer
         uart_read(HOST_UART, page_buffer, frame_size);
-        memcpy(&FW_cipher[current_indx], page_buffer, frame_size);
+        // pad buffer if frame is smaller than the page
+        for(i = frame_size; i < FLASH_PAGE_SIZE; i++) {
+            page_buffer[i] = 0xFF;
+        }
+        // clear flash page
+        flash_erase_page(dst);
+        // write flash page
+        flash_write((uint32_t *)page_buffer, dst, FLASH_PAGE_SIZE >> 2);
+        // next page and decrease size
+        dst += FLASH_PAGE_SIZE;
         f_size -= frame_size;
-        current_indx += frame_size;
         // send frame ok
         uart_writeb(HOST_UART, FRAME_OK);
     }
-    // read encrypted fw cipher
-    if (verify_saffire_cipher(fw_meta->FW_size, FW_cipher, FW_plaintext, &(fw_meta->IVf), &(fw_meta->tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
+
+    f_size = fw_meta->FW_size;
+    int blocks = (f_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
+    int block_size;
+    uint8_t *cipher_ptr = (uint8_t *)FIRMWARE_STORAGE_PTR;
+    if (!verify_saffire_cipher(f_size, cipher_ptr, fw_plaintext, &(fw_meta->IVf), &(fw_meta->tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
     {
-        memset(FW_plaintext, 0, fw_meta->FW_size);
-        load_data_on_flash(FW_cipher, FIRMWARE_STORAGE_PTR, fw_meta->FW_size);
-        uart_writeb(HOST_UART, FRAME_OK);
-    }
-    else
-    {
-        /*Firmware data verification failed notification*/
+        flash_erase_page(FIRMWARE_STORAGE_PTR);
         uart_writeb(HOST_UART, FRAME_BAD);
-    }
+        return;
+    }   
+    uart_writeb(HOST_UART, FRAME_OK);
 }
+
+// void handle_FW_verification_response(protected_fw_format *fw_meta)
+// {
+//     int i;
+//     uint32_t frame_size, current_indx = 0;
+//     uint32_t f_size = fw_meta->FW_size;
+//     uint8_t FW_plaintext[f_size];
+//     uint8_t FW_cipher[f_size];
+//     uint8_t page_buffer[FLASH_PAGE_SIZE];
+
+//     while (f_size > 0)
+//     {
+//         // calculate frame size
+//         frame_size = f_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : f_size;
+//         // read frame into buffer
+//         uart_read(HOST_UART, page_buffer, frame_size);
+//         memcpy(&FW_cipher[current_indx], page_buffer, frame_size);
+//         f_size -= frame_size;
+//         current_indx += frame_size;
+//         // send frame ok
+//         uart_writeb(HOST_UART, FRAME_OK);
+//     }
+//     // read encrypted fw cipher
+//     if (verify_saffire_cipher(fw_meta->FW_size, FW_cipher, FW_plaintext, &(fw_meta->IVf), &(fw_meta->tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
+//     {
+//         memset(FW_plaintext, 0, fw_meta->FW_size);
+//         load_data_on_flash(FW_cipher, FIRMWARE_STORAGE_PTR, fw_meta->FW_size);
+//         uart_writeb(HOST_UART, FRAME_OK);
+//     }
+//     else
+//     {
+//         /*Firmware data verification failed notification*/
+//         uart_writeb(HOST_UART, FRAME_BAD);
+//     }
+// }
+
 bool check_FW_magic(protected_fw_format *fw_meta)
 {
     if (fw_meta->FW_magic[0] == 'F' && fw_meta->FW_magic[1] == 'W')

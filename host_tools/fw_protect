@@ -17,6 +17,7 @@ from pathlib import Path
 from Crypto.Cipher import AES
 import struct
 import os
+import math
 from util import print_banner, FIRMWARE_ROOT, LOG_FORMAT
 
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
@@ -24,6 +25,9 @@ log = logging.getLogger(Path(__file__).name)
 
 FW_MAGIC = b'FW'
 IV_SIZE = 12
+MAX_BLOCK_SIZE = 4096
+TAG_SIZE = 16
+MAX_TAG_NUM = 4
 fimrware_key_path = "/secrets/keyf.bin"
 version_number_key_path = "/secrets/keyv.bin"
 # fimrware_key_path = 'keyf.bin'
@@ -50,6 +54,8 @@ def encrypt_version_number (ivf, version_data):
         log.info("Failed to open the file: " + version_number_key_path)
 
 def encrypt_firmware_data(ivf, firmware_data):
+    fw_ciphertext = b''
+    tagf = b''
     try:
         with open(fimrware_key_path, "rb") as file:
             # Print the success message
@@ -60,8 +66,18 @@ def encrypt_firmware_data(ivf, firmware_data):
             # log.info(ivf.hex())
             # log.info("firmware_data:")
             # log.info(firmware_data.hex())
-            cipher = AES.new(key_f, AES.MODE_GCM, nonce=ivf)
-            fw_ciphertext, tagf = cipher.encrypt_and_digest(firmware_data)
+            blocks = math.ceil(len(firmware_data) / MAX_BLOCK_SIZE)
+            for x in range(blocks):
+                if x == range(blocks)[-1]:
+                    partial_data = firmware_data[MAX_BLOCK_SIZE * x:]
+                else:
+                    partial_data = firmware_data[MAX_BLOCK_SIZE * x: MAX_BLOCK_SIZE * (x+1)]
+                cipher = AES.new(key_f, AES.MODE_GCM, nonce=ivf)
+                fw_cipher_partial, tagf_partial = cipher.encrypt_and_digest(partial_data)
+                fw_ciphertext += fw_cipher_partial
+                tagf += tagf_partial
+
+            tagf += b'\0' * (MAX_TAG_NUM - blocks) * TAG_SIZE
             # log.info("firmware_data cipher:")
             # log.info(fw_ciphertext.hex())
             # log.info("firmware tag:")

@@ -56,16 +56,17 @@
 #define EEPROM_KEYC_ADDRESS 0x40
 #define EEPROM_PUBLIC_KEY_ADDRESS 0x60
 #define EEPROM_HOST_PUBKEY_SIZE 164
-#define MAX_TAG_NUM 16
 #define FW_MAGIC_LEN 2
 #define CFG_MAGIC_LEN 3
 #define IV_SIZE 12
 #define TAG_SIZE 16
-#define VERSION_CIPHER_SIZE 20
+#define VERSION_CIPHER_SIZE 68
 #define AES_KEY_LEN 32
+#define MAX_CFG_TAG_NUM 16
+#define MAX_FW_TAG_NUM 4
 #define MAX_BLOCK_SIZE 4096
 #define FW_META_INFO (FW_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE)
-#define CFG_META_INFO (CFG_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE * MAX_TAG_NUM)
+#define CFG_META_INFO (CFG_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE * MAX_CFG_TAG_NUM)
 #define MAX_RELEASE_MESSAGE_SIZE 1025
 #define CHALLENGE_SIZE 64
 
@@ -77,7 +78,7 @@ typedef struct __attribute__((packed))
   uint8_t IVf[IV_SIZE]; // 12 bytes -> 18
   uint8_t tagv[TAG_SIZE]; // 16 bytes -> 34
   uint32_t version_number;
-  uint8_t tagf[TAG_SIZE];
+  uint8_t tagf[TAG_SIZE * MAX_FW_TAG_NUM];
 } protected_fw_format;
 
 typedef struct __attribute__((packed))
@@ -85,7 +86,7 @@ typedef struct __attribute__((packed))
   uint8_t CFG_magic[CFG_MAGIC_LEN]; // 3 bytes
   uint32_t CFG_size; // 4 bytes (3 + 4)
   uint8_t IVc[IV_SIZE]; // 12 bytes -> 19
-  uint8_t tagc[TAG_SIZE * MAX_TAG_NUM]; // 16*16 bytes -> 275
+  uint8_t tagc[TAG_SIZE * MAX_CFG_TAG_NUM]; // 16*16 bytes -> 275
 } protected_cfg_format;
 
 typedef struct __attribute__((packed))
