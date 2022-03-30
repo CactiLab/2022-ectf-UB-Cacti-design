@@ -538,7 +538,7 @@ void handle_configure(void)
     // Retrieve configuration
     handle_CFG_verification_response(&cfg_meta);
     memcpy(&cfg_boot_meta.IVc, &cfg_meta.IVc, IV_SIZE);
-    memcpy(&cfg_boot_meta.tagc, &cfg_meta.tagc, TAG_SIZE);
+    memcpy(&cfg_boot_meta.tagc, &cfg_meta.tagc, TAG_SIZE * MAX_CFG_TAG_NUM);
     uart_writeb(HOST_UART, FRAME_OK); /*remove this later*/
     cfg_updated = true;
 }
