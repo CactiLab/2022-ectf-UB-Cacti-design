@@ -202,6 +202,9 @@ void handle_readback(void)
     size |= ((uint32_t)uart_readb(HOST_UART)) << 8;
     size |= (uint32_t)uart_readb(HOST_UART);
     
+    if (size > total_size)
+        return;
+    
     int blocks = (total_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
     int block_size;
     
@@ -216,9 +219,9 @@ void handle_readback(void)
             block_size = MAX_BLOCK_SIZE;
         }
         if (region == 'C')
-            verify_saffire_cipher(block_size, address, readback_data, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc), (uint32_t)EEPROM_KEYC_ADDRESS);
+            verify_saffire_cipher(block_size, &address[i * MAX_BLOCK_SIZE], readback_data, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc), (uint32_t)EEPROM_KEYC_ADDRESS);
         else
-            verify_saffire_cipher(block_size, address, readback_data, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS);
+            verify_saffire_cipher(block_size, &address[i * MAX_BLOCK_SIZE], readback_data, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS);
 
         uart_write(HOST_UART, readback_data, block_size < size ? block_size : size);
         size -= block_size;
@@ -383,41 +386,6 @@ void handle_FW_verification_response(protected_fw_format *fw_meta)
     }   
     uart_writeb(HOST_UART, FRAME_OK);
 }
-
-// void handle_FW_verification_response(protected_fw_format *fw_meta)
-// {
-//     int i;
-//     uint32_t frame_size, current_indx = 0;
-//     uint32_t f_size = fw_meta->FW_size;
-//     uint8_t FW_plaintext[f_size];
-//     uint8_t FW_cipher[f_size];
-//     uint8_t page_buffer[FLASH_PAGE_SIZE];
-
-//     while (f_size > 0)
-//     {
-//         // calculate frame size
-//         frame_size = f_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : f_size;
-//         // read frame into buffer
-//         uart_read(HOST_UART, page_buffer, frame_size);
-//         memcpy(&FW_cipher[current_indx], page_buffer, frame_size);
-//         f_size -= frame_size;
-//         current_indx += frame_size;
-//         // send frame ok
-//         uart_writeb(HOST_UART, FRAME_OK);
-//     }
-//     // read encrypted fw cipher
-//     if (verify_saffire_cipher(fw_meta->FW_size, FW_cipher, FW_plaintext, &(fw_meta->IVf), &(fw_meta->tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
-//     {
-//         memset(FW_plaintext, 0, fw_meta->FW_size);
-//         load_data_on_flash(FW_cipher, FIRMWARE_STORAGE_PTR, fw_meta->FW_size);
-//         uart_writeb(HOST_UART, FRAME_OK);
-//     }
-//     else
-//     {
-//         /*Firmware data verification failed notification*/
-//         uart_writeb(HOST_UART, FRAME_BAD);
-//     }
-// }
 
 bool check_FW_magic(protected_fw_format *fw_meta)
 {
