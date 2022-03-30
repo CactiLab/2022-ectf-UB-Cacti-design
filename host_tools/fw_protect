@@ -77,7 +77,7 @@ def encrypt_firmware_data(ivf, firmware_data):
                 fw_ciphertext += fw_cipher_partial
                 tagf += tagf_partial
 
-            tagf += b'\0' * (MAX_TAG_NUM - blocks) * TAG_SIZE
+            tagf += b'\xff' * (MAX_TAG_NUM - blocks) * TAG_SIZE
             # log.info("firmware_data cipher:")
             # log.info(fw_ciphertext.hex())
             # log.info("firmware tag:")

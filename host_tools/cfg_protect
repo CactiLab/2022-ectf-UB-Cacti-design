@@ -49,7 +49,7 @@ def encrypt_cfg_data(ivc, cfg_data):
                 cfg_ciphertext += cfg_cipher_partial
                 tagc += tagc_partial
             
-            tagc += b'\0' * (MAX_TAG_NUM - blocks) * TAG_SIZE
+            tagc += b'\xff' * (MAX_TAG_NUM - blocks) * TAG_SIZE
             # log.info(f"blcoks: {blocks}")
             # log.info("should have padding")
             
