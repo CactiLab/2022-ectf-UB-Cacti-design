@@ -72,7 +72,7 @@ void handle_boot(void)
     // Copy the firmware into the Boot RAM section
     int blocks = (fw_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
     int block_size;
-    
+
     for (int i = 0; i < blocks; i++)
     {
         if (i == blocks - 1)
@@ -230,13 +230,13 @@ void handle_readback(void)
     size |= ((uint32_t)uart_readb(HOST_UART)) << 16;
     size |= ((uint32_t)uart_readb(HOST_UART)) << 8;
     size |= (uint32_t)uart_readb(HOST_UART);
-    
+
     if (size > total_size)
         return;
-    
+
     int blocks = (total_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
     int block_size;
-    
+
     for (int i = 0; i < blocks && size > 0; i++)
     {
         if (i == blocks - 1)
@@ -254,7 +254,6 @@ void handle_readback(void)
 
         uart_write(HOST_UART, readback_data, block_size < size ? block_size : size);
         size -= block_size;
-
     }
     // Read out the memory
 #ifdef MPU_ENABLED
@@ -300,55 +299,6 @@ void load_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size)
     }
 }
 
-void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
-{
-    int i;
-    uint32_t frame_size;
-    uint32_t c_size = cfg_meta->CFG_size;
-    uint32_t dst = CONFIGURATION_STORAGE_PTR;
-    uint8_t cfg_plaintext[MAX_BLOCK_SIZE];
-    // uint8_t cfg_cipher[MAX_BLOCK_SIZE];
-    uint8_t page_buffer[FLASH_PAGE_SIZE];
-
-    while(c_size > 0) {
-        // calculate frame size
-        frame_size = c_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : c_size;
-        // read frame into buffer
-        uart_read(HOST_UART, page_buffer, frame_size);
-        // pad buffer if frame is smaller than the page
-        for(i = frame_size; i < FLASH_PAGE_SIZE; i++) {
-            page_buffer[i] = 0xFF;
-        }
-        // clear flash page
-        flash_erase_page(dst);
-        // write flash page
-        flash_write((uint32_t *)page_buffer, dst, FLASH_PAGE_SIZE >> 2);
-        // next page and decrease size
-        dst += FLASH_PAGE_SIZE;
-        c_size -= frame_size;
-        // send frame ok
-        uart_writeb(HOST_UART, FRAME_OK);
-    }
-
-    c_size = cfg_meta->CFG_size;
-    int blocks = (c_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
-    int block_size;
-    uint8_t *cipher_ptr = (uint8_t *)CONFIGURATION_STORAGE_PTR;
-    if (!verify_saffire_cipher(c_size, cipher_ptr, cfg_plaintext, &(cfg_meta->IVc), &(cfg_meta->tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
-    {
-        dst = CONFIGURATION_STORAGE_PTR;
-        while(c_size > 0) {
-            frame_size = c_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : c_size;
-            flash_erase_page(dst);
-            dst += FLASH_PAGE_SIZE;
-            c_size -= frame_size;
-        }
-        uart_writeb(HOST_UART, FRAME_BAD);
-        return;
-    }   
-    uart_writeb(HOST_UART, FRAME_OK);
-}
-
 bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint32_t key_address)
 {
     int ret = 0;
@@ -379,6 +329,58 @@ bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, u
     return true;
 }
 
+void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
+{
+    int i;
+    uint32_t frame_size;
+    uint32_t c_size = cfg_meta->CFG_size;
+    uint32_t dst = CONFIGURATION_STORAGE_PTR;
+    uint8_t cfg_plaintext[MAX_BLOCK_SIZE];
+    // uint8_t cfg_cipher[MAX_BLOCK_SIZE];
+    uint8_t page_buffer[FLASH_PAGE_SIZE];
+
+    while (c_size > 0)
+    {
+        // calculate frame size
+        frame_size = c_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : c_size;
+        // read frame into buffer
+        uart_read(HOST_UART, page_buffer, frame_size);
+        // pad buffer if frame is smaller than the page
+        for (i = frame_size; i < FLASH_PAGE_SIZE; i++)
+        {
+            page_buffer[i] = 0xFF;
+        }
+        // clear flash page
+        flash_erase_page(dst);
+        // write flash page
+        flash_write((uint32_t *)page_buffer, dst, FLASH_PAGE_SIZE >> 2);
+        // next page and decrease size
+        dst += FLASH_PAGE_SIZE;
+        c_size -= frame_size;
+        // send frame ok
+        uart_writeb(HOST_UART, FRAME_OK);
+    }
+
+    c_size = cfg_meta->CFG_size;
+    int blocks = (c_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
+    int block_size;
+    uint8_t *cipher_ptr = (uint8_t *)CONFIGURATION_STORAGE_PTR;
+    if (!verify_saffire_cipher(c_size, cipher_ptr, cfg_plaintext, &(cfg_meta->IVc), &(cfg_meta->tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
+    {
+        dst = CONFIGURATION_STORAGE_PTR;
+        while (c_size > 0)
+        {
+            frame_size = c_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : c_size;
+            flash_erase_page(dst);
+            dst += FLASH_PAGE_SIZE;
+            c_size -= frame_size;
+        }
+        uart_writeb(HOST_UART, FRAME_BAD);
+        return;
+    }
+    uart_writeb(HOST_UART, FRAME_OK);
+}
+
 void handle_FW_verification_response(protected_fw_format *fw_meta)
 {
     int i;
@@ -389,13 +391,15 @@ void handle_FW_verification_response(protected_fw_format *fw_meta)
     // uint8_t FW_cipher[f_size];
     uint8_t page_buffer[FLASH_PAGE_SIZE];
 
-    while(f_size > 0) {
+    while (f_size > 0)
+    {
         // calculate frame size
         frame_size = f_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : f_size;
         // read frame into buffer
         uart_read(HOST_UART, page_buffer, frame_size);
         // pad buffer if frame is smaller than the page
-        for(i = frame_size; i < FLASH_PAGE_SIZE; i++) {
+        for (i = frame_size; i < FLASH_PAGE_SIZE; i++)
+        {
             page_buffer[i] = 0xFF;
         }
         // clear flash page
@@ -416,7 +420,8 @@ void handle_FW_verification_response(protected_fw_format *fw_meta)
     if (!verify_saffire_cipher(f_size, cipher_ptr, fw_plaintext, &(fw_meta->IVf), &(fw_meta->tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
     {
         dst = CONFIGURATION_STORAGE_PTR;
-        while(f_size > 0) {
+        while (f_size > 0)
+        {
             frame_size = f_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : f_size;
             flash_erase_page(dst);
             dst += FLASH_PAGE_SIZE;
@@ -424,7 +429,7 @@ void handle_FW_verification_response(protected_fw_format *fw_meta)
         }
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
-    }   
+    }
     uart_writeb(HOST_UART, FRAME_OK);
 }
 
@@ -470,14 +475,8 @@ void handle_update(void)
         return;
     }
 
-    // Acknowledge version data verification success
-    uart_writeb(HOST_UART, FRAME_OK);
-
     memcpy((uint32_t)&fw_meta.version_number, output, sizeof(int));
     memcpy(&fw_meta.tagf, &output[sizeof(int)], VERSION_CIPHER_SIZE - sizeof(int));
-
-    // Receive release message
-    rel_msg_size = uart_readline(HOST_UART, rel_msg) + 1; // Include terminator
 
     // Check the version
     current_version = *((uint32_t *)FIRMWARE_VERSION_PTR);
@@ -492,6 +491,12 @@ void handle_update(void)
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
     }
+
+    // Acknowledge version data verification success
+    uart_writeb(HOST_UART, FRAME_OK);
+
+    // Receive release message
+    rel_msg_size = uart_readline(HOST_UART, rel_msg) + 1; // Include terminator
 
     // Clear firmware metadata
     flash_erase_page(FIRMWARE_METADATA_PTR);
