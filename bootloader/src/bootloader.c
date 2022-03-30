@@ -51,32 +51,61 @@ void handle_boot(void)
     size = *((uint32_t *)FIRMWARE_SIZE_PTR);
     cfg_size = *((uint32_t *)CONFIGURATION_SIZE_PTR);
 
-    uint8_t FW_plaintext[size];
-    uint8_t cfg_plaintext[cfg_size];
+    uint8_t plaintext[MAX_BLOCK_SIZE];
 
     FW_cipher = (uint8_t *)FIRMWARE_STORAGE_PTR;
     CFG_cipher = (uint8_t *)CONFIGURATION_STORAGE_PTR;
     // Acknowledge the host
     uart_writeb(HOST_UART, 'B');
 
-    if (!verify_saffire_cipher(size, FW_cipher, FW_plaintext, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
+    if (!verify_saffire_cipher(size, FW_cipher, plaintext, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
     {
         uart_writeb(HOST_UART, 'X');
         return;
     }
-    if (!verify_saffire_cipher(cfg_size, CFG_cipher, cfg_plaintext, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
+    if (!verify_saffire_cipher(cfg_size, CFG_cipher, plaintext, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
     {
         uart_writeb(HOST_UART, 'Y');
         return;
     }
 
     // Copy the firmware into the Boot RAM section
-    for (i = 0; i < size; i++)
+    int blocks = (size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
+    int block_size;
+    
+    for (int i = 0; i < blocks; i++)
     {
-        *((uint8_t *)(FIRMWARE_BOOT_PTR + i)) = FW_plaintext[i];
+        if (i == blocks - 1)
+        {
+            block_size = size - i * MAX_BLOCK_SIZE;
+        }
+        else
+        {
+            block_size = MAX_BLOCK_SIZE;
+        }
+        verify_saffire_cipher(block_size, &FW_cipher[i * MAX_BLOCK_SIZE], plaintext, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS);
+        for (i = 0; i < block_size; i++)
+        {
+            *((uint8_t *)(FIRMWARE_BOOT_PTR + i)) = plaintext[i];
+        }
+    }
+
+    blocks = (cfg_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
+
+    for (int i = 0; i < blocks; i++)
+    {
+        if (i == blocks - 1)
+        {
+            block_size = cfg_size - i * MAX_BLOCK_SIZE;
+        }
+        else
+        {
+            block_size = MAX_BLOCK_SIZE;
+        }
+        verify_saffire_cipher(block_size, &CFG_cipher[i * MAX_BLOCK_SIZE], plaintext, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc), (uint32_t)EEPROM_KEYC_ADDRESS);
+        load_data_on_flash(plaintext, CONFIGURATION_STORAGE_PTR, block_size);
     }
     // write cfg data as plain text
-    load_data_on_flash(cfg_plaintext, CONFIGURATION_STORAGE_PTR, cfg_size);
 
     uart_writeb(HOST_UART, 'M');
 
