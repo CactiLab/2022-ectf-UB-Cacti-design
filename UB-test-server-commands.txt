@@ -1,0 +1,7 @@
+curl -d "username=ub&password=rrHvcxULgG50tGlSRhIadw&url=GIT_SSH_URL&tag=release-v1.8" -X POST http://3.236.107.75:8080/test_code
+
+
+curl -d "username=ub&rrHvcxULgG50tGlSRhIadw=PASSWORD&tag=release-v1.8" -X POST http://3.236.107.75:8080/get_status
+
+
+curl -d "username=ub&rrHvcxULgG50tGlSRhIadw=PASSWORD&tag=release-v1.8" -X POST http://3.236.107.75:8080/get_log > test_results.log
