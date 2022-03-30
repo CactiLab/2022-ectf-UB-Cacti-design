@@ -41,14 +41,14 @@ bool cfg_updated = false;
 
 void handle_boot(void)
 {
-    uint32_t size, cfg_size;
+    uint32_t fw_size, cfg_size;
     uint32_t i = 0;
     uint8_t *rel_msg;
     uint8_t *FW_cipher;
     uint8_t *CFG_cipher;
     int ret = 0;
 
-    size = *((uint32_t *)FIRMWARE_SIZE_PTR);
+    fw_size = *((uint32_t *)FIRMWARE_SIZE_PTR);
     cfg_size = *((uint32_t *)CONFIGURATION_SIZE_PTR);
 
     uint8_t plaintext[MAX_BLOCK_SIZE];
@@ -58,7 +58,7 @@ void handle_boot(void)
     // Acknowledge the host
     uart_writeb(HOST_UART, 'B');
 
-    if (!verify_saffire_cipher(size, FW_cipher, plaintext, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
+    if (!verify_saffire_cipher(fw_size, FW_cipher, plaintext, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
     {
         uart_writeb(HOST_UART, 'X');
         return;
@@ -70,14 +70,14 @@ void handle_boot(void)
     }
 
     // Copy the firmware into the Boot RAM section
-    int blocks = (size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
+    int blocks = (fw_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
     int block_size;
     
     for (int i = 0; i < blocks; i++)
     {
         if (i == blocks - 1)
         {
-            block_size = size - i * MAX_BLOCK_SIZE;
+            block_size = fw_size - i * MAX_BLOCK_SIZE;
         }
         else
         {
