@@ -307,7 +307,13 @@ void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
     uint8_t *cipher_ptr = (uint8_t *)CONFIGURATION_STORAGE_PTR;
     if (!verify_saffire_cipher(c_size, cipher_ptr, cfg_plaintext, &(cfg_meta->IVc), &(cfg_meta->tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
     {
-        flash_erase_page(CONFIGURATION_STORAGE_PTR);
+        dst = CONFIGURATION_STORAGE_PTR;
+        while(c_size > 0) {
+            frame_size = c_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : c_size;
+            flash_erase_page(dst);
+            dst += FLASH_PAGE_SIZE;
+            c_size -= frame_size;
+        }
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
     }   
@@ -380,7 +386,13 @@ void handle_FW_verification_response(protected_fw_format *fw_meta)
     uint8_t *cipher_ptr = (uint8_t *)FIRMWARE_STORAGE_PTR;
     if (!verify_saffire_cipher(f_size, cipher_ptr, fw_plaintext, &(fw_meta->IVf), &(fw_meta->tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
     {
-        flash_erase_page(FIRMWARE_STORAGE_PTR);
+        dst = CONFIGURATION_STORAGE_PTR;
+        while(f_size > 0) {
+            frame_size = f_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : f_size;
+            flash_erase_page(dst);
+            dst += FLASH_PAGE_SIZE;
+            f_size -= frame_size;
+        }
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
     }   
