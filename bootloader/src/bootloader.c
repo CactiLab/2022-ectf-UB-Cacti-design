@@ -254,7 +254,7 @@ void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
     uint32_t frame_size;
     uint32_t c_size = cfg_meta->CFG_size;
     uint32_t dst = CONFIGURATION_STORAGE_PTR;
-    uint8_t cfg_plaintext[MAX_BLOCK_SIZE < c_size ? MAX_BLOCK_SIZE : c_size];
+    uint8_t cfg_plaintext[MAX_BLOCK_SIZE];
     // uint8_t cfg_cipher[MAX_BLOCK_SIZE];
     uint8_t page_buffer[FLASH_PAGE_SIZE];
 
