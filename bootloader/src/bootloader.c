@@ -289,50 +289,7 @@ void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
         return;
     }   
     uart_writeb(HOST_UART, FRAME_OK);
-
-    // while (c_size > 0)
-    // {
-    //     // calculate frame size
-    //     frame_size = c_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : c_size;
-    //     // read frame into buffer
-    //     uart_read(HOST_UART, page_buffer, frame_size);
-    //     memcpy(&cfg_cipher[current_indx], page_buffer, frame_size);
-    //     c_size -= frame_size;
-    //     current_indx += frame_size;
-    //     // send frame ok
-    //     uart_writeb(HOST_UART, FRAME_OK);
-    // }
-    // // read encrypted cfg cipher
-    // if (verify_saffire_cipher(cfg_meta->CFG_size, cfg_cipher, cfg_plaintext, &(cfg_meta->IVc), &(cfg_meta->tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
-    // {
-    //     memset(cfg_plaintext, 0, cfg_meta->CFG_size);
-    //     load_data_on_flash(cfg_cipher, CONFIGURATION_STORAGE_PTR, cfg_meta->CFG_size);
-    //     uart_writeb(HOST_UART, FRAME_OK);
-    // }
-    // else
-    // {
-    //     /*configuration data verification failed notification*/
-    //     uart_writeb(HOST_UART, FRAME_BAD);
-    // }
 }
-
-// bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint32_t key_address)
-// {
-//     int ret = 0;
-//     uint8_t key[AES_KEY_LEN];
-//     // Get keyf from eeprom
-//     EEPROMRead(key, key_address, AES_KEY_LEN);
-//     // gcm_initialize();
-//     ret = aes_gcm_decrypt_auth(plaintext, cipher, size, key, AES_KEY_LEN, IV, IV_SIZE, tag, TAG_SIZE);
-
-//     if (ret != 0)
-//     {
-//         // Authentication failure of version data
-//         return false;
-//     }
-//     // Firmware data aunthentication success
-//     return true;
-// }
 
 bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint32_t key_address)
 {
