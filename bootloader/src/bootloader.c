@@ -120,7 +120,7 @@ void handle_readback(void)
     uint8_t *address;
     uint32_t size = 0;
     uint32_t total_size;
-    uint8_t readback_data[(*((uint32_t *)FIRMWARE_SIZE_PTR) > *((uint32_t *)CONFIGURATION_SIZE_PTR) && fw_udpated) ? *((uint32_t *)FIRMWARE_SIZE_PTR) : *((uint32_t *)CONFIGURATION_SIZE_PTR)];
+    uint8_t readback_data[100];
 #ifdef MPU_ENABLED
     uint32_t mpu_change_ap_flag = 0;
 #endif
@@ -201,10 +201,29 @@ void handle_readback(void)
     size |= ((uint32_t)uart_readb(HOST_UART)) << 16;
     size |= ((uint32_t)uart_readb(HOST_UART)) << 8;
     size |= (uint32_t)uart_readb(HOST_UART);
-    uint8_t send_readback_data[size];
-    memcpy(send_readback_data, readback_data, size);
+    
+    int blocks = (total_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
+    int block_size;
+    
+    for (int i = 0; i < blocks; i++)
+    {
+        if (i == blocks - 1)
+        {
+            block_size = size - i * MAX_BLOCK_SIZE;
+        }
+        else
+        {
+            block_size = MAX_BLOCK_SIZE;
+        }
+        if (region == 'C')
+            verify_saffire_cipher(block_size, address, readback_data, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc), (uint32_t)EEPROM_KEYC_ADDRESS);
+        else
+            verify_saffire_cipher(block_size, address, readback_data, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS);
+
+        uart_write(HOST_UART, readback_data, block_size < size ? block_size : size);
+        
+    }
     // Read out the memory
-    uart_write(HOST_UART, send_readback_data, size);
 #ifdef MPU_ENABLED
     if (mpu_change_ap_flag != 0)
         MPURegionDisable(mpu_change_ap_flag);
