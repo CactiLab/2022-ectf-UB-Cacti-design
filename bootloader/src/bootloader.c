@@ -247,9 +247,9 @@ void handle_readback(void)
             block_size = MAX_BLOCK_SIZE;
         }
         if (region == 'C')
-            verify_saffire_cipher(block_size, &address[i * MAX_BLOCK_SIZE], readback_data, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc), (uint32_t)EEPROM_KEYC_ADDRESS);
+            verify_saffire_cipher(block_size, &address[i * MAX_BLOCK_SIZE], readback_data, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc[i * TAG_SIZE]), (uint32_t)EEPROM_KEYC_ADDRESS);
         else
-            verify_saffire_cipher(block_size, &address[i * MAX_BLOCK_SIZE], readback_data, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS);
+            verify_saffire_cipher(block_size, &address[i * MAX_BLOCK_SIZE], readback_data, &(boot_meta.IVf), &(boot_meta.tagf[i * TAG_SIZE]), (uint32_t)EEPROM_KEYF_ADDRESS);
 
         uart_write(HOST_UART, readback_data, block_size < size ? block_size : size);
         size -= block_size;
