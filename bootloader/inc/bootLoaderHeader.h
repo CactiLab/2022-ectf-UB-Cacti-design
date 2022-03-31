@@ -43,7 +43,7 @@
  */
 #define STACK_PTR                  ((uint32_t)0x20000000)
 #define FIRMWARE_BOOT_PTR          ((uint32_t)0x20004000)
-
+#define DUMMY_PLAINTEXT             FIRMWARE_BOOT_PTR
 // Firmware update constants
 #define FRAME_OK 0x00
 #define FRAME_BAD 0x01

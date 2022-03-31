@@ -191,11 +191,11 @@ void handle_readback(void)
         // Set the base address for the readback
         address = (uint8_t *)FIRMWARE_STORAGE_PTR;
         total_size = *((uint32_t *)FIRMWARE_SIZE_PTR);
-        if (!verify_saffire_cipher(total_size, address, readback_data, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
-        {
-            uart_writeb(HOST_UART, 'X');
-            return;
-        }
+        // if (!verify_saffire_cipher(total_size, address, readback_data, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
+        // {
+        //     uart_writeb(HOST_UART, 'X');
+        //     return;
+        // }
         // Acknowledge the host
         uart_writeb(HOST_UART, 'F');
     }
@@ -208,11 +208,11 @@ void handle_readback(void)
         // Set the base address for the readback
         address = (uint8_t *)CONFIGURATION_STORAGE_PTR;
         total_size = *((uint32_t *)CONFIGURATION_SIZE_PTR);
-        if (!verify_saffire_cipher(total_size, address, readback_data, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
-        {
-            uart_writeb(HOST_UART, 'Y');
-            return;
-        }
+        // if (!verify_saffire_cipher(total_size, address, readback_data, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
+        // {
+        //     uart_writeb(HOST_UART, 'Y');
+        //     return;
+        // }
         // Acknowledge the hose
         uart_writeb(HOST_UART, 'C');
     }
@@ -247,9 +247,15 @@ void handle_readback(void)
             block_size = MAX_BLOCK_SIZE;
         }
         if (region == 'C')
-            verify_saffire_cipher(block_size, &address[i * MAX_BLOCK_SIZE], readback_data, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc[i * TAG_SIZE]), (uint32_t)EEPROM_KEYC_ADDRESS);
-        else
-            verify_saffire_cipher(block_size, &address[i * MAX_BLOCK_SIZE], readback_data, &(boot_meta.IVf), &(boot_meta.tagf[i * TAG_SIZE]), (uint32_t)EEPROM_KEYF_ADDRESS);
+        {
+            if (!verify_saffire_cipher(block_size, &address[i * MAX_BLOCK_SIZE], readback_data, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc[i * TAG_SIZE]), (uint32_t)EEPROM_KEYC_ADDRESS))
+                return;
+        } 
+        else if (region == 'F')
+        {
+            if (!verify_saffire_cipher(block_size, &address[i * MAX_BLOCK_SIZE], readback_data, &(boot_meta.IVf), &(boot_meta.tagf[i * TAG_SIZE]), (uint32_t)EEPROM_KEYF_ADDRESS))
+                return;
+        }
 
         uart_write(HOST_UART, readback_data, block_size < size ? block_size : size);
         size -= block_size;
@@ -334,7 +340,7 @@ void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
     uint32_t frame_size = 0;
     uint32_t c_size = cfg_meta->CFG_size;
     uint32_t dst = CONFIGURATION_STORAGE_PTR;
-    uint8_t *cfg_plaintext = NULL;
+    uint8_t *cfg_plaintext = (uint8_t *)DUMMY_PLAINTEXT;
     // uint8_t cfg_cipher[MAX_BLOCK_SIZE];
     uint8_t page_buffer[FLASH_PAGE_SIZE] = {0};
 
@@ -386,7 +392,7 @@ void handle_FW_verification_response(protected_fw_format *fw_meta)
     uint32_t frame_size;
     uint32_t f_size = fw_meta->FW_size;
     uint32_t dst = FIRMWARE_STORAGE_PTR;
-    uint8_t *fw_plaintext = NULL;
+    uint8_t *fw_plaintext = (uint8_t *)DUMMY_PLAINTEXT;
     // uint8_t FW_cipher[f_size];
     uint8_t page_buffer[FLASH_PAGE_SIZE] = {0};
 
