@@ -334,7 +334,7 @@ void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
     uint32_t frame_size = 0;
     uint32_t c_size = cfg_meta->CFG_size;
     uint32_t dst = CONFIGURATION_STORAGE_PTR;
-    uint8_t cfg_plaintext[MAX_BLOCK_SIZE] = {0};
+    uint8_t *cfg_plaintext = NULL;
     // uint8_t cfg_cipher[MAX_BLOCK_SIZE];
     uint8_t page_buffer[FLASH_PAGE_SIZE] = {0};
 
@@ -386,7 +386,7 @@ void handle_FW_verification_response(protected_fw_format *fw_meta)
     uint32_t frame_size;
     uint32_t f_size = fw_meta->FW_size;
     uint32_t dst = FIRMWARE_STORAGE_PTR;
-    uint8_t fw_plaintext[MAX_BLOCK_SIZE] = {0};
+    uint8_t *fw_plaintext = NULL;
     // uint8_t FW_cipher[f_size];
     uint8_t page_buffer[FLASH_PAGE_SIZE] = {0};
 
