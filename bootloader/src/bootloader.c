@@ -553,6 +553,7 @@ void handle_update(void)
 
     memcpy(&boot_meta.IVf, &fw_meta.IVf, IV_SIZE);
     memcpy(&boot_meta.tagf, &output[sizeof(int)], TAG_SIZE * MAX_FW_TAG_NUM);
+    EEPROMProgram(&boot_meta, EEPROM_BOOT_FW_META_DATA_ADDRESS, BOOT_FW_META_SIZE);
 }
 
 bool check_CFG_magic(protected_cfg_format *cfg_meta)
@@ -591,6 +592,7 @@ void handle_configure(void)
     handle_CFG_verification_response(&cfg_meta);
     memcpy(&cfg_boot_meta.IVc, &cfg_meta.IVc, IV_SIZE);
     memcpy(&cfg_boot_meta.tagc, &cfg_meta.tagc, TAG_SIZE * MAX_CFG_TAG_NUM);
+    EEPROMProgram(&cfg_boot_meta, EEPROM_BOOT_CFG_META_DATA_ADDRESS, BOOT_CFG_META_SIZE);
     uart_writeb(HOST_UART, FRAME_OK); /*remove this later*/
 }
 
@@ -632,8 +634,8 @@ int main(void)
     SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
     uint8_t inItRet = EEPROMInit();
     gcm_initialize();
-    memset(&boot_meta, 0, sizeof(fw_boot_meta_data));
-    memset(&cfg_boot_meta, 0, sizeof(cfg_boot_meta_data));
+    EEPROMRead(&boot_meta, EEPROM_BOOT_FW_META_DATA_ADDRESS, BOOT_FW_META_SIZE);
+    EEPROMRead(&cfg_boot_meta, EEPROM_BOOT_CFG_META_DATA_ADDRESS, BOOT_CFG_META_SIZE);
 
 #ifdef RSA_AUTH
     rsa_pk host_pub;

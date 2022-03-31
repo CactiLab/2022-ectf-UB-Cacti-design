@@ -61,7 +61,7 @@ def load_configuration(socket_number: int, config_file: Path):
         # Send packets
         send_packets(sock, cfg_cipher)
 
-        log.info("Firmware configured\n")
+        log.info("Configuration file loaded\n")
 
 
 def main():

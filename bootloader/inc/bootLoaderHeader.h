@@ -56,6 +56,10 @@
 #define EEPROM_KEYC_ADDRESS 0x40
 #define EEPROM_PUBLIC_KEY_ADDRESS 0x60
 #define EEPROM_HOST_PUBKEY_SIZE 164
+#define EEPROM_BOOT_FW_META_DATA_ADDRESS 0x104
+#define BOOT_FW_META_SIZE 76
+#define EEPROM_BOOT_CFG_META_DATA_ADDRESS 0x150
+#define BOOT_CFG_META_SIZE 268
 #define FW_MAGIC_LEN 2
 #define CFG_MAGIC_LEN 3
 #define IV_SIZE 12
@@ -91,16 +95,16 @@ typedef struct __attribute__((packed))
   uint8_t padding;
 } protected_cfg_format;
 
-typedef struct __attribute__((packed))
+typedef struct __attribute__((packed)) //268 total size
 {
-  uint8_t IVc[IV_SIZE]; // 12 bytes -> 18
-  uint8_t tagc[TAG_SIZE * MAX_CFG_TAG_NUM];
+  uint8_t IVc[IV_SIZE]; // 12 bytes 
+  uint8_t tagc[TAG_SIZE * MAX_CFG_TAG_NUM]; // 16 * 16 bytes 
 } cfg_boot_meta_data;
 
-typedef struct __attribute__((packed))
+typedef struct __attribute__((packed)) //76 total size
 {
-  uint8_t IVf[IV_SIZE]; // 12 bytes -> 18
-  uint8_t tagf[TAG_SIZE * MAX_FW_TAG_NUM];
+  uint8_t IVf[IV_SIZE]; // 12 bytes 
+  uint8_t tagf[TAG_SIZE * MAX_FW_TAG_NUM]; // 4* 16 bytes
 } fw_boot_meta_data;
 
 fw_boot_meta_data boot_meta;
