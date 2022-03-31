@@ -61,8 +61,8 @@ def update_firmware(socket_number: int, firmware_file: Path):
         log.info("Sending MAGIC, FW size, IVF, and Tagv...")
         
         sock.send(FW_meta_data)
-        log.info(FW_meta_data.hex())
-        log.info("Meta data size :" + str(len(FW_meta_data)))
+        # log.info(FW_meta_data.hex())
+        # log.info("Meta data size :" + str(len(FW_meta_data)))
 
         #Wait for bootloader response after magic checking
         response = sock.recv(1)
@@ -74,8 +74,8 @@ def update_firmware(socket_number: int, firmware_file: Path):
 
         #Send version data
         sock.send(version_data)
-        log.info(version_data.hex())
-        log.info("VERSION DATA size: " + str(len(version_data)))
+        # log.info(version_data.hex())
+        # log.info("VERSION DATA size: " + str(len(version_data)))
         #Wait for bootloader response after version intergrity checking
         response = sock.recv(1)
         if response != RESP_OK:
@@ -103,7 +103,7 @@ def update_firmware(socket_number: int, firmware_file: Path):
         
         # Send packets
         log.info("Sending firmware packets...")
-        log.info(firmware.hex())
+        # log.info(firmware.hex())
         log.info("Firmware size: " + str(len(firmware)))
         send_packets(sock, firmware)
     

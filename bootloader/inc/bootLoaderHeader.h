@@ -79,6 +79,7 @@ typedef struct __attribute__((packed))
   uint8_t tagv[TAG_SIZE]; // 16 bytes -> 34
   uint32_t version_number;
   uint8_t tagf[TAG_SIZE * MAX_FW_TAG_NUM];
+  uint8_t padding[2];
 } protected_fw_format;
 
 typedef struct __attribute__((packed))
@@ -87,6 +88,7 @@ typedef struct __attribute__((packed))
   uint32_t CFG_size; // 4 bytes (3 + 4)
   uint8_t IVc[IV_SIZE]; // 12 bytes -> 19
   uint8_t tagc[TAG_SIZE * MAX_CFG_TAG_NUM]; // 16*16 bytes -> 275
+  uint8_t padding;
 } protected_cfg_format;
 
 typedef struct __attribute__((packed))

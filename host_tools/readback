@@ -97,14 +97,14 @@ def readback(socket_number, region, num_bytes):
             # send firmware identifier
             sock.send(b"F")
             # get acknowledgement
-            log.info("Waiting for bootloader to confirm the region...")
+            log.info("Waiting for bootloader to confirm the firmware region...")
             while sock.recv(1) != b"F":
                 pass
         elif region == "configuration":
             # send configuration identifier
             sock.send(b"C")
             # get acknowledgement
-            log.info("Waiting for bootloader to confirm the region...")
+            log.info("Waiting for bootloader to confirm the configuration region...")
             while sock.recv(1) != b"C":
                 pass
         else:
@@ -117,7 +117,7 @@ def readback(socket_number, region, num_bytes):
         sock.send(size)
 
         # Receive firmware data
-        log.info("Receiving firmware...")
+        log.info("Receiving data...")
         bytes_remaining = num_bytes
         fw = b""
         while bytes_remaining > 0:

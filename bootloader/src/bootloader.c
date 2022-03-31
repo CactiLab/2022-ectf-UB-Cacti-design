@@ -33,9 +33,7 @@
 #include "aes.h"
 #endif
 
-bool fw_udpated = false;
-bool cfg_updated = false;
-uint32_t stored_version = 0xFFFFFFFF;
+// uint32_t stored_version = 0xFFFFFFFF;
 /**
  * @brief Boot the firmware.
  */
@@ -333,7 +331,7 @@ bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, u
 void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
 {
     int i;
-    uint32_t frame_size;
+    uint32_t frame_size = 0;
     uint32_t c_size = cfg_meta->CFG_size;
     uint32_t dst = CONFIGURATION_STORAGE_PTR;
     uint8_t cfg_plaintext[MAX_BLOCK_SIZE] = {0};
@@ -447,13 +445,14 @@ bool check_FW_magic(protected_fw_format *fw_meta)
 void handle_update(void)
 {
     // metadata
-    uint32_t current_version;
+    uint32_t current_version = 0;
     uint32_t rel_msg_size = 0;
-    uint8_t rel_msg[MAX_RELEASE_MESSAGE_SIZE]; // 1024 + terminator
+    uint8_t rel_msg[MAX_RELEASE_MESSAGE_SIZE] = {0}; // 1024 + terminator
     protected_fw_format fw_meta;
-    uint8_t version_cipher_data[VERSION_CIPHER_SIZE];
-    uint8_t output[VERSION_CIPHER_SIZE];
+    uint8_t version_cipher_data[VERSION_CIPHER_SIZE] = {0};
+    uint8_t output[VERSION_CIPHER_SIZE] = {0};
 
+    memset(&fw_meta, 0, sizeof(protected_fw_format));
     // Acknowledge the host
     uart_writeb(HOST_UART, 'U');
 
@@ -482,8 +481,8 @@ void handle_update(void)
     // Check the version
     // fw_meta.version_number = (uint32_t *)output[0];
     memcpy((uint32_t)&fw_meta.version_number, output, sizeof(int));
-    // current_version = *((uint32_t *)FIRMWARE_VERSION_PTR);
-    current_version = stored_version;
+    current_version = *((uint32_t *)FIRMWARE_VERSION_PTR);
+    // current_version = stored_version;
     if (current_version == 0xFFFFFFFF)
     {
         current_version = (uint32_t)OLDEST_VERSION;
@@ -512,7 +511,7 @@ void handle_update(void)
     }
     else
     {
-        stored_version = current_version;
+        // stored_version = current_version;
         flash_write_word(current_version, FIRMWARE_VERSION_PTR);
     }
 
@@ -554,7 +553,6 @@ void handle_update(void)
 
     memcpy(&boot_meta.IVf, &fw_meta.IVf, IV_SIZE);
     memcpy(&boot_meta.tagf, &output[sizeof(int)], TAG_SIZE * MAX_FW_TAG_NUM);
-    fw_udpated = true;
 }
 
 bool check_CFG_magic(protected_cfg_format *cfg_meta)
@@ -570,10 +568,11 @@ bool check_CFG_magic(protected_cfg_format *cfg_meta)
 void handle_configure(void)
 {
     protected_cfg_format cfg_meta;
+    memset(&cfg_meta, 0, sizeof(protected_cfg_format));
     // Acknowledge the host
     uart_writeb(HOST_UART, 'C');
 
-    uart_read(HOST_UART, &cfg_meta, CFG_META_INFO); /*READ 35 Bytes: MAGIC(3) +  FW_SIZE(4) + IVF(12) + tagv(16)*/
+    uart_read(HOST_UART, &cfg_meta, CFG_META_INFO); /*READ 275 Bytes: MAGIC(3) +  FW_SIZE(4) + IVF(12) + tagv(16 * 16)*/
 
     if (!check_CFG_magic(&cfg_meta))
     {
@@ -593,7 +592,6 @@ void handle_configure(void)
     memcpy(&cfg_boot_meta.IVc, &cfg_meta.IVc, IV_SIZE);
     memcpy(&cfg_boot_meta.tagc, &cfg_meta.tagc, TAG_SIZE * MAX_CFG_TAG_NUM);
     uart_writeb(HOST_UART, FRAME_OK); /*remove this later*/
-    cfg_updated = true;
 }
 
 /**
@@ -634,6 +632,8 @@ int main(void)
     SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
     uint8_t inItRet = EEPROMInit();
     gcm_initialize();
+    memset(&boot_meta, 0, sizeof(fw_boot_meta_data));
+    memset(&cfg_boot_meta, 0, sizeof(cfg_boot_meta_data));
 
 #ifdef RSA_AUTH
     rsa_pk host_pub;
