@@ -35,6 +35,7 @@
 
 bool fw_udpated = false;
 bool cfg_updated = false;
+uint32_t stored_version = 0xFFFFFFFF;
 /**
  * @brief Boot the firmware.
  */
@@ -161,7 +162,7 @@ void handle_readback(void)
     uint8_t challenge[CHALLENGE_SIZE] = {0};
     uint8_t challenge_signed[CHALLENGE_SIZE] = {0};
     uint8_t challenge_auth[CHALLENGE_SIZE] = {0};
-    //read public key from eeprom
+    // read public key from eeprom
     rsa_pk host_pub;
     EEPROMRead(&host_pub, EEPROM_PUBLIC_KEY_ADDRESS, EEPROM_HOST_PUBKEY_SIZE);
     // add verification: send challenge
@@ -335,9 +336,9 @@ void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
     uint32_t frame_size;
     uint32_t c_size = cfg_meta->CFG_size;
     uint32_t dst = CONFIGURATION_STORAGE_PTR;
-    uint8_t cfg_plaintext[MAX_BLOCK_SIZE];
+    uint8_t cfg_plaintext[MAX_BLOCK_SIZE] = {0};
     // uint8_t cfg_cipher[MAX_BLOCK_SIZE];
-    uint8_t page_buffer[FLASH_PAGE_SIZE];
+    uint8_t page_buffer[FLASH_PAGE_SIZE] = {0};
 
     while (c_size > 0)
     {
@@ -387,9 +388,9 @@ void handle_FW_verification_response(protected_fw_format *fw_meta)
     uint32_t frame_size;
     uint32_t f_size = fw_meta->FW_size;
     uint32_t dst = FIRMWARE_STORAGE_PTR;
-    uint8_t fw_plaintext[MAX_BLOCK_SIZE];
+    uint8_t fw_plaintext[MAX_BLOCK_SIZE] = {0};
     // uint8_t FW_cipher[f_size];
-    uint8_t page_buffer[FLASH_PAGE_SIZE];
+    uint8_t page_buffer[FLASH_PAGE_SIZE] = {0};
 
     while (f_size > 0)
     {
@@ -419,7 +420,7 @@ void handle_FW_verification_response(protected_fw_format *fw_meta)
     uint8_t *cipher_ptr = (uint8_t *)FIRMWARE_STORAGE_PTR;
     if (!verify_saffire_cipher(f_size, cipher_ptr, fw_plaintext, &(fw_meta->IVf), &(fw_meta->tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
     {
-        dst = CONFIGURATION_STORAGE_PTR;
+        dst = FIRMWARE_STORAGE_PTR;
         while (f_size > 0)
         {
             frame_size = f_size > FLASH_PAGE_SIZE ? FLASH_PAGE_SIZE : f_size;
@@ -439,6 +440,7 @@ bool check_FW_magic(protected_fw_format *fw_meta)
         return true;
     return false;
 }
+
 /**
  * @brief Update the firmware.
  */
@@ -474,12 +476,14 @@ void handle_update(void)
         uart_writeb(HOST_UART, FRAME_BAD);
         return;
     }
-
-    memcpy((uint32_t)&fw_meta.version_number, output, sizeof(int));
-    memcpy(&fw_meta.tagf, &output[sizeof(int)], VERSION_CIPHER_SIZE - sizeof(int));
+    // Acknowledge version data verification success
+    uart_writeb(HOST_UART, FRAME_OK);
 
     // Check the version
-    current_version = *((uint32_t *)FIRMWARE_VERSION_PTR);
+    // fw_meta.version_number = (uint32_t *)output[0];
+    memcpy((uint32_t)&fw_meta.version_number, output, sizeof(int));
+    // current_version = *((uint32_t *)FIRMWARE_VERSION_PTR);
+    current_version = stored_version;
     if (current_version == 0xFFFFFFFF)
     {
         current_version = (uint32_t)OLDEST_VERSION;
@@ -492,7 +496,7 @@ void handle_update(void)
         return;
     }
 
-    // Acknowledge version data verification success
+    // Acknowledge version number checking success
     uart_writeb(HOST_UART, FRAME_OK);
 
     // Receive release message
@@ -508,6 +512,7 @@ void handle_update(void)
     }
     else
     {
+        stored_version = current_version;
         flash_write_word(current_version, FIRMWARE_VERSION_PTR);
     }
 
@@ -544,9 +549,11 @@ void handle_update(void)
     uart_writeb(HOST_UART, FRAME_OK);
 
     // Retrieve firmware
+    memcpy(&fw_meta.tagf, &output[sizeof(int)], VERSION_CIPHER_SIZE - sizeof(int));
     handle_FW_verification_response(&fw_meta);
+
     memcpy(&boot_meta.IVf, &fw_meta.IVf, IV_SIZE);
-    memcpy(&boot_meta.tagf, &fw_meta.tagf, TAG_SIZE * MAX_FW_TAG_NUM);
+    memcpy(&boot_meta.tagf, &output[sizeof(int)], TAG_SIZE * MAX_FW_TAG_NUM);
     fw_udpated = true;
 }
 
@@ -670,11 +677,12 @@ int main(void)
 #ifdef MPU_ENABLED
             mpu_ap_change(30);
             mpu_ap_change(40);
-            mpu_ap_change(50);
+            // mpu_ap_change(50);
 #endif
             handle_boot();
 #ifdef MPU_ENABLED
-            mpu_ap_change(99);
+            MPURegionDisable(3);
+            MPURegionDisable(4);
 #endif
             break;
         default:
