@@ -104,7 +104,7 @@ def update_firmware(socket_number: int, firmware_file: Path):
         # Send packets
         log.info("Sending firmware packets...")
         # log.info(firmware.hex())
-        log.info("Firmware size: " + str(len(firmware)))
+        # log.info("Firmware size: " + str(len(firmware)))
         send_packets(sock, firmware)
     
         log.info("Firmware updated\n")
