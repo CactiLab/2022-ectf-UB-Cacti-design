@@ -132,9 +132,9 @@ The attackers can carry out the following attacks:
 
 The host $H$ has its private key $sk_k$ stored in the host secret file.
 The bootloader can access the associated public key $pk_k$ and three AES256-GCM keys for firmware ($k_f$), configuration ($k_c$), and version number ($k_v$) protection, which are stored in the EEPROM.
-EEPROM also stores additional secrets that the bootloader needs at run-time.
+EEPROM also stores additional secrets that the bootloader needs at run-time, including Tags for integrity checking and IVs for symmetric crypto.
 
-MPU is configured to constrain the access permission for different operations (discussed in section 3.5). 
+%MPU is configured to constrain the access permission for different operations (discussed in section 3.5). 
 
 ENC and DEC stand for symmetric encryption and decryption with AES256-GCM.
 %AENC and ADEC stand for asymmetric encryption and decryption with RSA512.
@@ -142,10 +142,10 @@ ENC and DEC stand for symmetric encryption and decryption with AES256-GCM.
 
 \subsection{Key Protection}
 The asymmetric $pk_k$, symmetric $k_f$, $k_c$, and $k_v$ are kept in the EEPROM region memory for the bootloader to access at run-time.
-When the bootloader starts execution it configures the MPU, which allows only the bootloader itself to access the EEPROM memory.
-After that, it copies the keys from the EEPROM to the flash memory.
-Immediately, EEPROM blocks containing the keys are locked using the EEPROM block locking feature, which denies read/write access for everyone until reset.
-Thus, even if attackers can overwrite the MPU configurations, they can not access the EEPROM memory.
+%When the bootloader starts execution it configures the MPU, which allows only the bootloader itself to access the EEPROM memory.
+%After that, it copies the keys from the EEPROM to the flash memory.
+%Immediately, EEPROM blocks containing the keys are locked using the EEPROM block locking feature, which denies read/write access for everyone until reset.
+%Thus, even if attackers can overwrite the MPU configurations, they can not access the EEPROM memory.
 
 \subsection{Firmware and Configuration Data Protection}
 Symmetric crypto is used for firmware, configuration data, version number protection, $k_f$, $k_c$, and $k_v$.
@@ -155,7 +155,9 @@ Figure~\ref{fig:frmt} demonstrates the format of protected images.
 FW\_SIZE indicates the original firmware size, we have two tags for encrypted firmware and version, separately.
 The size of IV is 96 bit, key for symmetric crypto is 256 bit.
 Then the size of generated tag is 128 bit.
-
+To support large 64KB configuration data, 16KB Firmware data we split the data into 4KB blocks and generate separate tags for each block.
+For configuration data, we have 16 separate tags, thus tagc size in Figure~\ref{fig:frmt} is actually (16 * 16 = 256 bytes).
+Similarl, for firmware data. we have 4 separate tags, and tagf is 64 bytes.
 \begin{figure}[!htbp]
 	\begin{centering}
 		\includegraphics[width = .98\textwidth]{pic/FW_CFG_FORMAT.pdf}
@@ -212,7 +214,7 @@ We implement a challenge-response mechanism to ensure that only the valid host c
 \begin{itemize}
   \item[Step 1.] Initiate readback. 
   The host (or attacker) sends the command \textbf{R} through UART to the bootloader.
-  In response, bootloader sends back a randomly generated challenge number to the requesting party ($chal$).  
+  In response, bootloader sends back a randomly generated challenge number (64 bytes) to the requesting party ($chal$).  
   \item[Step 2.] Host sends authentication message.
   The host receives the challenge number from the bootloader through UART.
   The host uses the private key $sk_k$ to encrypt the challenge number, $\mathcal{C}$ = AENC$_{sk_k}(chal)$.
@@ -226,27 +228,30 @@ We implement a challenge-response mechanism to ensure that only the valid host c
   \item [Step 4.] Decrypt the requested memory of the firmware or configuration data and write response on the UART connection for the host.
 \end{itemize}
 
-\subsection{MPU setting for access permission}
+\subsection{Support Reset}
+In our system, keys are stored in EEPROM, so it supports reset.
+But as we need the Tags, IVs to verify the data after reset, after configuration load and firmware update we store the required data on the EEPROM.
 
-As figure~\ref{fig:mpu} shows, based on the design document, FLASH and SRAM are separated into several MPU regions with different access permissions for different operations.
-In detail:
-\begin{itemize}
-	\item At the initialization stage, only the Bootloader and Stack are set as executable and read-write for privileged access.
-	Others are eXecute never and have no read and write permissions.
-	\item At the firmware update stage (command \verb|F|), the firmware region will be changed to readable and writable.
-	\item At the configuration stage (command \verb|C|), the flight configuration region will be changed to readable and writable.
-	\item At readback stage (command \verb|R|), either change the firmware (command \verb|F|) or flight configuration (command \verb|C|) region on FLASH to read-only.
-	\item At the boot stage (command \verb|B|), the firmware region on SRAM will be changed to executable, along with the other regions as readable and writable.
-\end{itemize}
+%\subsection{MPU setting for access permission}
 
-\begin{figure}[!htbp]
-	\begin{centering}
-		\includegraphics[width = .8\textwidth]{pic/MPU_CFG.pdf}
-		\caption{MPU settings for different operations}
-		\label{fig:mpu}
-	\end{centering}
-\end{figure}
+%As figure~\ref{fig:mpu} shows, based on the design document, FLASH and SRAM are separated into several MPU regions with different access permissions for different operations.
+%In detail:
+%\begin{itemize}
+%	\item At the initialization stage, only the Bootloader and Stack are set as executable and read-write for privileged access.
+%	Others are eXecute never and have no read and write permissions.
+%	\item At the firmware update stage (command \verb|F|), the firmware region will be changed to readable and writable.
+%	\item At the configuration stage (command \verb|C|), the flight configuration region will be changed to readable and writable.
+%	\item At readback stage (command \verb|R|), either change the firmware (command \verb|F|) or flight configuration (command \verb|C|) region on FLASH to read-only.
+%	\item At the boot stage (command \verb|B|), the firmware region on SRAM will be changed to executable, along with the other regions as readable and writable.
+%\end{itemize}
 
+%\begin{figure}[!htbp]
+%	\begin{centering}
+%		\includegraphics[width = .8\textwidth]{pic/MPU_CFG.pdf}
+%		\caption{MPU settings for different operations}
+%		\label{fig:mpu}
+%	\end{centering}
+%\end{figure}
 % \subsection{Defeat Hardware Trojan}
 
 % \subsection{Defeat Side-channel Attacks}
