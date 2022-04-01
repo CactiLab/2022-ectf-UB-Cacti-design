@@ -142,6 +142,14 @@ ENC and DEC stand for symmetric encryption and decryption with AES256-GCM.
 
 \subsection{Key Protection}
 The asymmetric $pk_k$, symmetric $k_f$, $k_c$, and $k_v$ are kept in the EEPROM region memory for the bootloader to access at run-time.
+As shown in Figure~\ref{fig:eepromFrmt}, the keys are updated on EEPROM at system build, and other data such as Tags, IVs are updated at run-time.
+\begin{figure}[!htbp]
+	\begin{centering}
+		\includegraphics[width = .98\textwidth]{pic/EEPROM_format.pdf}
+		\caption{EEPROM Key and other data storage format}
+		\label{fig:eepromFrmt}
+	\end{centering}
+\end{figure}
 %When the bootloader starts execution it configures the MPU, which allows only the bootloader itself to access the EEPROM memory.
 %After that, it copies the keys from the EEPROM to the flash memory.
 %Immediately, EEPROM blocks containing the keys are locked using the EEPROM block locking feature, which denies read/write access for everyone until reset.
@@ -231,7 +239,7 @@ We implement a challenge-response mechanism to ensure that only the valid host c
 \subsection{Support Reset}
 In our system, keys are stored in EEPROM, so it supports reset.
 But as we need the Tags, IVs to verify the data after reset, after configuration load and firmware update we store the required data on the EEPROM.
-
+Figure~\ref{fig:eepromFrmt} shows the storage format of those data on EEPROM memory.
 %\subsection{MPU setting for access permission}
 
 %As figure~\ref{fig:mpu} shows, based on the design document, FLASH and SRAM are separated into several MPU regions with different access permissions for different operations.
