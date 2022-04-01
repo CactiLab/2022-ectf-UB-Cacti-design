@@ -72,6 +72,8 @@ void handle_boot(void)
     int blocks = (fw_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
     int block_size;
 
+    EEPROMRead(&boot_meta, EEPROM_BOOT_FW_META_DATA_ADDRESS, BOOT_FW_META_SIZE);
+
     for (int i = 0; i < blocks; i++)
     {
         if (i == blocks - 1)
@@ -90,7 +92,8 @@ void handle_boot(void)
     }
 
     blocks = (cfg_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
-
+    EEPROMRead(&cfg_boot_meta, EEPROM_BOOT_CFG_META_DATA_ADDRESS, BOOT_CFG_META_SIZE);
+    
     for (int i = 0; i < blocks; i++)
     {
         if (i == blocks - 1)
@@ -148,7 +151,8 @@ void handle_readback(void)
     uint8_t *address;
     uint32_t size = 0;
     uint32_t total_size;
-    uint8_t readback_data[MAX_BLOCK_SIZE];
+    uint8_t *readback_data = (uint8_t *)DUMMY_PLAINTEXT;
+    // uint8_t *readback_data = (uint8_t *)DUMMY_PLAINTEXT;
 #ifdef MPU_ENABLED
     uint32_t mpu_change_ap_flag = 0;
 #endif
@@ -235,6 +239,9 @@ void handle_readback(void)
 
     int blocks = (total_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
     int block_size;
+
+    EEPROMRead(&boot_meta, EEPROM_BOOT_FW_META_DATA_ADDRESS, BOOT_FW_META_SIZE);
+    EEPROMRead(&cfg_boot_meta, EEPROM_BOOT_CFG_META_DATA_ADDRESS, BOOT_CFG_META_SIZE);
 
     for (int i = 0; i < blocks && size > 0; i++)
     {
