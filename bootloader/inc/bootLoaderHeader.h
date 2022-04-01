@@ -45,45 +45,50 @@
 #define FIRMWARE_BOOT_PTR          ((uint32_t)0x20004000)
 #define DUMMY_PLAINTEXT             FIRMWARE_BOOT_PTR
 // Firmware update constants
-#define FRAME_OK 0x00
-#define FRAME_BAD 0x01
+#define FRAME_OK                    0x00
+#define FRAME_BAD                   0x01
 
-#define BOOTLOADER_SECRET_DATA_PTR 0x40 /*We cannot start from zero as block 0 cannot be hidden. */
-#define EEPROM_SECRET_BLOCK_START 0x1
-#define EEPROM_BLOCK_SIZE 64
-#define EEPROM_KEYV_ADDRESS 0x0
-#define EEPROM_KEYF_ADDRESS 0x20
-#define EEPROM_KEYC_ADDRESS 0x40
-#define EEPROM_PUBLIC_KEY_ADDRESS 0x60
-#define EEPROM_HOST_PUBKEY_SIZE 164
+#define BOOTLOADER_SECRET_DATA_PTR  0x40 /*We cannot start from zero as block 0 cannot be hidden. */
+#define EEPROM_SECRET_BLOCK_START   0x1
+#define EEPROM_BLOCK_SIZE           64
+#define EEPROM_KEYV_ADDRESS         0x0
+#define EEPROM_KEYF_ADDRESS         0x20
+#define EEPROM_KEYC_ADDRESS         0x40
+#define EEPROM_PUBLIC_KEY_ADDRESS   0x60
+#define EEPROM_HOST_PUBKEY_SIZE     164
+
+#define FW_MAGIC_LEN                2
+#define CFG_MAGIC_LEN               3
+#define IV_SIZE                     12
+#define TAG_SIZE                    16
+#define AES_KEY_LEN                 32
+#define MAX_RELEASE_MESSAGE_SIZE    1025
+#define CHALLENGE_SIZE              64
+
+#define MAX_BLOCK_SIZE              2048
+#define MAX_CFG_TAG_NUM             32
+#define MAX_FW_TAG_NUM              8
+
+#define VERSION_CIPHER_SIZE         (4 + TAG_SIZE*MAX_FW_TAG_NUM) // 132
+#define FW_META_INFO                (FW_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE)
+#define CFG_META_INFO               (CFG_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE * MAX_CFG_TAG_NUM)
+#define BOOT_FW_META_SIZE           (IV_SIZE + TAG_SIZE * MAX_FW_TAG_NUM) //140
+#define BOOT_CFG_META_SIZE          (IV_SIZE + TAG_SIZE * MAX_CFG_TAG_NUM)
+
 #define EEPROM_BOOT_FW_META_DATA_ADDRESS 0x104
-#define BOOT_FW_META_SIZE 76
-#define EEPROM_BOOT_CFG_META_DATA_ADDRESS 0x150
-#define BOOT_CFG_META_SIZE 268
-#define FW_MAGIC_LEN 2
-#define CFG_MAGIC_LEN 3
-#define IV_SIZE 12
-#define TAG_SIZE 16
-#define VERSION_CIPHER_SIZE 68
-#define AES_KEY_LEN 32
-#define MAX_CFG_TAG_NUM 16
-#define MAX_FW_TAG_NUM 4
-#define MAX_BLOCK_SIZE 4096
-#define FW_META_INFO (FW_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE)
-#define CFG_META_INFO (CFG_MAGIC_LEN + 4  + IV_SIZE + TAG_SIZE * MAX_CFG_TAG_NUM)
-#define MAX_RELEASE_MESSAGE_SIZE 1025
-#define CHALLENGE_SIZE 64
+#define EEPROM_BOOT_CFG_META_DATA_ADDRESS (EEPROM_BOOT_FW_META_DATA_ADDRESS + BOOT_FW_META_SIZE)
 
-#define SYSTICK_HIGHEST_VALUE 16777216
-typedef struct __attribute__((packed))
+#define SYSTICK_HIGHEST_VALUE       16777216
+
+typedef struct __attribute__((packed))  // 192
 {
   uint8_t FW_magic[FW_MAGIC_LEN]; // 2 bytes
   uint32_t FW_size; // 4 bytes (2 + 4)
   uint8_t IVf[IV_SIZE]; // 12 bytes -> 18
   uint8_t tagv[TAG_SIZE]; // 16 bytes -> 34
-  uint32_t version_number;
-  uint8_t tagf[TAG_SIZE * MAX_FW_TAG_NUM];
-  uint8_t padding[2];
+  uint32_t version_number; // 4 bytes
+  uint8_t tagf[TAG_SIZE * MAX_FW_TAG_NUM]; // 16*8=128
+  uint8_t padding[2]; // 2
 } protected_fw_format;
 
 typedef struct __attribute__((packed))
@@ -91,20 +96,20 @@ typedef struct __attribute__((packed))
   uint8_t CFG_magic[CFG_MAGIC_LEN]; // 3 bytes
   uint32_t CFG_size; // 4 bytes (3 + 4)
   uint8_t IVc[IV_SIZE]; // 12 bytes -> 19
-  uint8_t tagc[TAG_SIZE * MAX_CFG_TAG_NUM]; // 16*16 bytes -> 275
+  uint8_t tagc[TAG_SIZE * MAX_CFG_TAG_NUM]; // 16*16 bytes -> 275   16*32 -> 531
   uint8_t padding;
 } protected_cfg_format;
 
-typedef struct __attribute__((packed)) //268 total size
+typedef struct __attribute__((packed)) //524 total size
 {
   uint8_t IVc[IV_SIZE]; // 12 bytes 
-  uint8_t tagc[TAG_SIZE * MAX_CFG_TAG_NUM]; // 16 * 16 bytes 
+  uint8_t tagc[TAG_SIZE * MAX_CFG_TAG_NUM]; // 16 * 32 bytes 
 } cfg_boot_meta_data;
 
-typedef struct __attribute__((packed)) //76 total size
+typedef struct __attribute__((packed)) //140 total size
 {
   uint8_t IVf[IV_SIZE]; // 12 bytes 
-  uint8_t tagf[TAG_SIZE * MAX_FW_TAG_NUM]; // 4* 16 bytes
+  uint8_t tagf[TAG_SIZE * MAX_FW_TAG_NUM]; // 16 * 8 bytes
 } fw_boot_meta_data;
 
 fw_boot_meta_data boot_meta;

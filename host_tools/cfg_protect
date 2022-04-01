@@ -25,9 +25,10 @@ log = logging.getLogger(Path(__file__).name)
 
 CFG_MAGIC = b'CFG'
 IV_SIZE = 12
-MAX_BLOCK_SIZE = 4096
 TAG_SIZE = 16
-MAX_TAG_NUM = 16
+MAX_BLOCK_SIZE = 2048
+MAX_TAG_NUM = 32
+
 cfg_key_path = "/secrets/keyc.bin"
 # cfg_key_path = "keyc.bin"
 

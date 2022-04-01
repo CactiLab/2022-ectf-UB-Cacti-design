@@ -23,7 +23,7 @@ from util import print_banner, send_packets, RESP_OK, FIRMWARE_ROOT, LOG_FORMAT
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 log = logging.getLogger(Path(__file__).name)
 FW_META_INFO_SIZE = 34
-VERSION_DATA_SIZE = 68 # 4 + 16 * 4
+VERSION_DATA_SIZE = 132 # 4 + 16 * 8
 REL_SIZE = 4
 def update_firmware(socket_number: int, firmware_file: Path):
     print_banner("SAFFIRe Firmware Update Tool")

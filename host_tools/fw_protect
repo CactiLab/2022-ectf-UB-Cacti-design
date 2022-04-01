@@ -25,9 +25,10 @@ log = logging.getLogger(Path(__file__).name)
 
 FW_MAGIC = b'FW'
 IV_SIZE = 12
-MAX_BLOCK_SIZE = 4096
 TAG_SIZE = 16
-MAX_TAG_NUM = 4
+MAX_BLOCK_SIZE = 2048
+MAX_TAG_NUM = 8
+
 fimrware_key_path = "/secrets/keyf.bin"
 version_number_key_path = "/secrets/keyv.bin"
 # fimrware_key_path = 'keyf.bin'
