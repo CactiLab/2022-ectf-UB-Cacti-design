@@ -147,7 +147,7 @@ void handle_readback(void)
 {
     uint8_t region;
     uint8_t *address;
-    int size = 0;
+    uint32_t size = 0;
     uint32_t total_size;
     uint8_t readback_data[MAX_BLOCK_SIZE];
 #ifdef MPU_ENABLED
@@ -234,12 +234,13 @@ void handle_readback(void)
     if (size > total_size)
         return;
 
-    int blocks = (total_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
-    int block_size;
+    uint32_t readback_blocks = (size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
+    uint32_t total_blocks = (total_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
+    uint32_t block_size;
 
-    for (int i = 0; i < blocks && size > 0; i++)
+    for (int i = 0; i < total_blocks && i < readback_blocks; i++)
     {
-        if (i == blocks - 1)
+        if (i == total_blocks - 1)
         {
             block_size = total_size - i * MAX_BLOCK_SIZE;
         }
