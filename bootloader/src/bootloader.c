@@ -126,17 +126,17 @@ void handle_boot(void)
 void random_generate(uint8_t *challenge)
 {
     // char str[] = "0123456789abcdef";
-    //uint32_t seed = SysTickValueGet();
-    //srand(seed);
+    uint32_t seed = SysTickValueGet();
+    srand(seed);
     for (int i = 0; i < CHALLENGE_SIZE; i++)
     {
         // memcpy(challenge[i], &time, sizeof(uint32_t));
-        //challenge[i] = '0' + rand() % 80;
-        challenge[i] = i;
+        challenge[i] = '0' + rand() % 80;
+        // challenge[i] = i;
     }
-    //SysTickDisable();
-    //SysTickPeriodSet(SYSTICK_HIGHEST_VALUE);
-    //SysTickEnable();
+    SysTickDisable();
+    SysTickPeriodSet(SYSTICK_HIGHEST_VALUE);
+    SysTickEnable();
 }
 #endif
 
@@ -147,7 +147,7 @@ void handle_readback(void)
 {
     uint8_t region;
     uint8_t *address;
-    uint32_t size = 0;
+    int size = 0;
     uint32_t total_size;
     uint8_t readback_data[MAX_BLOCK_SIZE];
 #ifdef MPU_ENABLED
