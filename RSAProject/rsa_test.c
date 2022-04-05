@@ -1,0 +1,322 @@
+//
+//  rsa_test.c
+//  RSAProject
+//
+//  Created by guozhicheng on 5/9/16.
+//  Copyright © 2016 guozhicheng. All rights reserved.
+//
+
+#include "rsa_test.h"
+#include "rsa/rsa.h"
+#include "rsa/ctr_drbg.h"
+#include "rsa/entropy.h"
+#include "rsa/pk.h"
+
+ void testprint()
+{
+    printf("test generated key\n");
+    
+    pubEn();
+    
+}
+
+
+#define KEY_SIZE   2048
+#define EXPONENT   65537
+#define MSG_SIZE   64
+
+
+
+void getRsaKeys(mbedtls_rsa_context *pubRsa, mbedtls_rsa_context *priRsa) {
+    char *pub_file = "./test/pub.txt";
+    char *prv_file = "./test/private.txt";
+    
+    
+    mbedtls_pk_context pub, prv;
+    
+    mbedtls_pk_init( &pub );
+    mbedtls_pk_init( &prv );
+    
+    
+    if ( mbedtls_pk_parse_public_keyfile( &pub, pub_file ) == 0 ) {
+        printf("sucess\n");
+    }
+    if ( mbedtls_pk_parse_keyfile( &prv, prv_file, NULL ) == 0 ) {
+        printf("sucess\n");
+    }
+    
+    *pubRsa = *mbedtls_pk_rsa(pub);
+    *priRsa = *mbedtls_pk_rsa(prv);
+    
+}
+
+
+void pubEn() {
+    int ret;
+    mbedtls_rsa_context pubRsa, priRsa;
+    memset(&pubRsa, 0, sizeof(mbedtls_rsa_context));
+    memset(&priRsa, 0, sizeof(mbedtls_rsa_context));
+
+    getRsaKeys(&pubRsa,&priRsa);
+    
+    if (mbedtls_rsa_check_pub_priv(&pubRsa, &priRsa) == 0) {
+        printf("get rsa key sucess\n");
+    }
+    unsigned char msg[MSG_SIZE] = "hello world!";
+    unsigned char output[1000];
+    unsigned char outputPri[1000];
+    
+    memset(output, 0x00, 1000);
+    memset(outputPri, 0x00, 1000);
+
+    srand(time(NULL));
+
+    // *((uint32_t *)msg) = 0xaaaaaaaa;
+    size_t i = 0;
+    for (i = 0; i < MSG_SIZE;)
+    {
+        // msg[i] = 0xa3;
+        uint32_t tmp = rand();
+        msg[i++] = *(((unsigned char *)&tmp)+0);
+        msg[i++] = *(((unsigned char *)&tmp)+1);
+        msg[i++] = *(((unsigned char *)&tmp)+2);
+        msg[i++] = *(((unsigned char *)&tmp)+3);
+    }
+    printf("\ni: %d\n", i);
+    
+//    mbedtls_rsa_public(&pubRsa, msg, output);
+//    mbedtls_rsa_private(&priRsa, NULL, NULL, output, outputPri);
+    
+    ret = mbedtls_rsa_private(&priRsa, NULL, NULL, msg, output);
+    if(ret != 0){
+        printf("sign failed. %d\n", ret);
+    }
+    ret = mbedtls_rsa_public(&pubRsa, output, outputPri);
+    if(ret != 0){
+        printf("auth failed. %d\n", ret);
+    }    
+    printf("\nPlaintext\n");
+    for (size_t i = 0; i < MSG_SIZE; i++)
+    {
+        printf("%x ", msg[i]);
+    }
+    printf("\n");
+
+    printf("\nCipher\n");
+    for (size_t i = 0; i < MSG_SIZE; i++)
+    {
+        printf("%x ", output[i]);
+    }
+    printf("\n");
+
+    printf("\nDecipher\n");
+    for (size_t i = 0; i < MSG_SIZE; i++)
+    {
+        printf("%x ", outputPri[i]);
+    }
+    printf("\n");
+}
+
+void privateEn() {
+    
+}
+
+void initPubKey() {
+    
+    char *pub_file = "./test/pub.txt";
+    char *prv_file = "./test/private.txt";
+    int ret;
+    
+    mbedtls_pk_context pub, prv, alt;
+    
+    mbedtls_pk_init( &pub );
+    mbedtls_pk_init( &prv );
+    mbedtls_pk_init( &alt );
+    
+    if ( mbedtls_pk_parse_public_keyfile( &pub, pub_file ) == 0 ) {
+        printf("sucess\n");
+    }
+    if ( mbedtls_pk_parse_keyfile( &prv, prv_file, NULL ) == 0 ) {
+        printf("sucess\n");
+    }
+    
+    if ( mbedtls_pk_check_pair( &pub, &prv ) == ret ) {
+        printf("sucess\n");
+    }
+    
+    if ( mbedtls_rsa_check_pub_priv(mbedtls_pk_rsa(pub), mbedtls_pk_rsa(prv)) == 0) {
+        printf("check rsa key sucess\n");
+    }
+    
+    mbedtls_pk_free( &pub );
+    mbedtls_pk_free( &prv );
+    mbedtls_pk_free( &alt );
+}
+
+void generateRSAKeys() {
+    
+    const char *privateKeyFile = "./test/private.txt";
+    const char *pubKeyFile = "./test/pub.txt";
+    
+    int ret;
+    mbedtls_rsa_context rsa;
+    mbedtls_entropy_context entropy;
+    mbedtls_ctr_drbg_context ctr_drbg;
+    FILE *fpub  = NULL;
+    FILE *fpriv = NULL;
+    
+    const char *pers = "rsa_genkey_rsa_video_qqq";
+    
+    mbedtls_pk_context key;
+    mbedtls_pk_init(&key);
+    
+    mbedtls_pk_setup(&key, mbedtls_pk_info_from_type(MBEDTLS_PK_RSA));
+    
+    mbedtls_ctr_drbg_init( &ctr_drbg );
+    
+    printf( "\n  . Seeding the random number generator..." );
+    fflush( stdout );
+    
+    mbedtls_entropy_init( &entropy );
+    if( ( ret = mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func, &entropy,
+                                      (const uint8_t *) pers,
+                                      strlen( pers ) ) ) != 0 )
+    {
+        printf( " failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret );
+        goto exit;
+    }
+    
+    printf( " ok\n  . Generating the RSA key [ %d-bit ]...", KEY_SIZE );
+    fflush( stdout );
+    
+    mbedtls_rsa_init( &rsa, MBEDTLS_RSA_PKCS_V15, 0 );
+    
+    if( ( ret = mbedtls_rsa_gen_key( &rsa, mbedtls_ctr_drbg_random, &ctr_drbg, KEY_SIZE,
+                                    EXPONENT ) ) != 0 )
+    {
+        printf( " failed\n  ! mbedtls_rsa_gen_key returned %d\n\n", ret );
+        goto exit;
+    }
+    
+    key.pk_ctx = &rsa;
+    
+    printf( " ok\n  . Exporting the public  key in rsa_pub.txt...." );
+    fflush( stdout );
+    
+    write_private_key(&key, privateKeyFile);
+    write_pub_key(&key, pubKeyFile);
+    
+    fflush( stdout );
+    if( ( fpub = fopen( "./test/rsa_pub.txt", "wb+" ) ) == NULL )
+    {
+        printf( " failed\n  ! could not open rsa_pub.txt for writing\n\n" );
+        ret = 1;
+        goto exit;
+    }
+    
+    if( ( ret = mbedtls_mpi_write_file( "N = ", &rsa.N, 16, fpub ) ) != 0 ||
+       ( ret = mbedtls_mpi_write_file( "E = ", &rsa.E, 16, fpub ) ) != 0 )
+    {
+        printf( " failed\n  ! mbedtls_mpi_write_file returned %d\n\n", ret );
+        goto exit;
+    }
+    
+    printf( " ok\n  . Exporting the private key in rsa_priv.txt..." );
+    fflush( stdout );
+    
+    if( ( fpriv = fopen( "./test/rsa_priv.txt", "wb+" ) ) == NULL )
+    {
+        printf( " failed\n  ! could not open rsa_priv.txt for writing\n" );
+        ret = 1;
+        goto exit;
+    }
+    
+    if( ( ret = mbedtls_mpi_write_file( "N = " , &rsa.N , 16, fpriv ) ) != 0 ||
+       ( ret = mbedtls_mpi_write_file( "E = " , &rsa.E , 16, fpriv ) ) != 0 ||
+       ( ret = mbedtls_mpi_write_file( "D = " , &rsa.D , 16, fpriv ) ) != 0 ||
+       ( ret = mbedtls_mpi_write_file( "P = " , &rsa.P , 16, fpriv ) ) != 0 ||
+       ( ret = mbedtls_mpi_write_file( "Q = " , &rsa.Q , 16, fpriv ) ) != 0 ||
+       ( ret = mbedtls_mpi_write_file( "DP = ", &rsa.DP, 16, fpriv ) ) != 0 ||
+       ( ret = mbedtls_mpi_write_file( "DQ = ", &rsa.DQ, 16, fpriv ) ) != 0 ||
+       ( ret = mbedtls_mpi_write_file( "QP = ", &rsa.QP, 16, fpriv ) ) != 0 )
+    {
+        printf( " failed\n  ! mbedtls_mpi_write_file returned %d\n\n", ret );
+        goto exit;
+    }
+
+    printf( " ok\n\n" );
+    
+exit:
+    
+    if( fpub  != NULL )
+        fclose( fpub );
+    
+    if( fpriv != NULL )
+        fclose( fpriv );
+    
+    mbedtls_rsa_free( &rsa );
+    mbedtls_ctr_drbg_free( &ctr_drbg );
+    mbedtls_entropy_free( &entropy );
+    
+#if defined(_WIN32)
+    printf( "  Press Enter to exit this program.\n" );
+    fflush( stdout ); getchar();
+#endif
+    
+    return   ;
+}
+
+int write_pub_key( mbedtls_pk_context *key, const char *output_file ) {
+    
+    int ret;
+    FILE *f;
+    uint8_t output_buf[16000];
+    uint8_t *c = output_buf;
+    size_t len = 0;
+    
+    if( ( ret = mbedtls_pk_write_pubkey_pem( key, output_buf, 16000 ) ) != 0 )
+        return( ret );
+    
+    len = strlen( (char *) output_buf );
+    
+    if( ( f = fopen( output_file, "wb" ) ) == NULL )
+        return( -1 );
+    
+    if( fwrite( c, 1, len, f ) != len )
+    {
+        fclose( f );
+        return( -1 );
+    }
+    
+    fclose( f );
+    
+    return 0;
+}
+
+
+ int write_private_key( mbedtls_pk_context *key, const char *output_file ) {
+    
+    int ret;
+    FILE *f;
+    uint8_t output_buf[16000];
+    uint8_t *c = output_buf;
+    size_t len = 0;
+    
+     if( ( ret = mbedtls_pk_write_key_pem( key, output_buf, 16000 ) ) != 0 )
+         return( ret );
+     
+     len = strlen( (char *) output_buf );
+    
+    if( ( f = fopen( output_file, "wb" ) ) == NULL )
+        return( -1 );
+    
+    if( fwrite( c, 1, len, f ) != len )
+    {
+        fclose( f );
+        return( -1 );
+    }
+    
+    fclose( f );
+    
+    return 0;
+}
