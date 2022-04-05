@@ -90,7 +90,14 @@ def readback(socket_number, region, num_bytes):
         # Raise error if the file is not there.
         except IOError:
             log.info("Fiailed to delete signed challenge file. ")
+            return
 
+        if sock.recv(1) == b"S":
+            log.info("Challenge authentication success.")
+        else:
+            log.info("Challenge authentication failed.") 
+            return
+        
         # Send the region identifier
         log.info("Sending the region identifier to read back...")
         if region == "firmware":

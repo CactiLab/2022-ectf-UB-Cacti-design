@@ -127,19 +127,20 @@ void handle_boot(void)
 }
 
 #ifdef RSA_AUTH
-void random_generate(uint8_t *challenge)
+void random_generate(uint32_t *challenge)
 {
     // char str[] = "0123456789abcdef";
     uint32_t seed = SysTickValueGet();
     srand(seed);
-    //for (int i = 0; i < CHALLENGE_SIZE; i++)
-    //{
-        *((uint32_t*)challenge) = seed;
+    for (uint32_t i = 0; i < CHALLENGE_SIZE/4; i++)
+    {
+        challenge[i] = rand();
+        // rand();
         // memcpy(challenge[i], &time, sizeof(uint32_t));
-        //challenge[i] = '0' + rand() % 80;
+        // challenge[i] = '0' + rand() % 80;
         // challenge[i] =  rand() % 80;
         // challenge[i] = i;
-    //}
+    }
     // SysTickDisable();
     // SysTickPeriodSet(SYSTICK_HIGHEST_VALUE);
     // SysTickEnable();
@@ -172,7 +173,8 @@ void handle_readback(void)
     rsa_pk host_pub;
     EEPROMRead(&host_pub, EEPROM_PUBLIC_KEY_ADDRESS, EEPROM_HOST_PUBKEY_SIZE);
     // add verification: send challenge
-    random_generate(challenge);
+    random_generate((uint32_t*)challenge);
+    // random_generate(challenge);
     // send the challenge
     uart_write(HOST_UART, challenge, CHALLENGE_SIZE);
 
@@ -183,8 +185,10 @@ void handle_readback(void)
     int ret = memcmp(challenge_auth, challenge, CHALLENGE_SIZE);
     if (ret != 0)
     {
+        uart_writeb(HOST_UART, 'A');
         return;
     }
+    uart_writeb(HOST_UART, 'S');
 #endif
 
     // Receive region identifier
@@ -245,7 +249,7 @@ void handle_readback(void)
     uint32_t total_blocks = (total_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
     uint32_t block_size;
 
-    for (int i = 0; i < total_blocks && i < readback_blocks; i++)
+    for (uint32_t i = 0; i < total_blocks && i < readback_blocks; i++)
     {
         if (i == total_blocks - 1)
         {
