@@ -149,7 +149,8 @@ void handle_readback(void)
     uint8_t *address;
     uint32_t size = 0;
     uint32_t total_size;
-    uint8_t readback_data[MAX_BLOCK_SIZE];
+    //uint8_t readback_data[MAX_BLOCK_SIZE];
+    uint8_t *readback_data = (uint8_t *)DUMMY_PLAINTEXT;
 #ifdef MPU_ENABLED
     uint32_t mpu_change_ap_flag = 0;
 #endif
