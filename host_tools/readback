@@ -54,8 +54,8 @@ def readback(socket_number, region, num_bytes):
             challenge_receive = challenge_receive + sock.recv(1)
             cnt = cnt + 1
             
-        # log.info("print out received challenge\r\n")
-        # log.info(challenge_receive.hex())
+        log.info("print out received challenge\r\n")
+        log.info(challenge_receive.hex())
 
         # save it to the challenge filestr
         challenge_file = open("/host_tools/rsa/challenge", "wb")
