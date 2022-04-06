@@ -82,7 +82,7 @@ int sign_pk(char *challenge_file, char *challenge_signed_file)
     rsa_decrypt((DTYPE *)&challenge_signed, MAX_MODULUS_LENGTH, (DTYPE *)&chall, MAX_MODULUS_LENGTH, &host_pri);
 #ifdef DEBUG
     // printf("challenge_signed:\n");
-    // for (size_t i = 0; i < sizeof(challenge_signed); i++)
+    // for (size_t i = 0; i < CHALLENGE_SIZE; i++)
     // {
     //     printf("%02x", challenge_signed[i]);
     // }
@@ -99,7 +99,7 @@ int sign_pk(char *challenge_file, char *challenge_signed_file)
     // fwrite(&chall, 1, sizeof(rsa_pk), fp);
     //write signed digest into file
     // printf("write challenge_signed to file:\n");
-    fwrite(challenge_signed, 1, sizeof(challenge_signed), fp);
+    fwrite(challenge_signed, 1, CHALLENGE_SIZE, fp);
     fclose(fp);
 
     return 0;
@@ -168,7 +168,7 @@ int auth_pk(char *challenge_file, char *challenge_signed_file)
 
 #ifdef DEBUG
     // printf("auth the signed challenge:\n");
-    // for (size_t i = 0; i < sizeof(challenge_signed); i++)
+    // for (size_t i = 0; i < CHALLENGE_SIZE; i++)
     // {
     //     printf("%02x", challenge_signed[i]);
     // }
@@ -205,7 +205,7 @@ int auth_pk(char *challenge_file, char *challenge_signed_file)
     }
 
     // hex_to_string(chall_msg, chall);
-    fwrite(challenge_auth, 1, sizeof(challenge_auth), fp);
+    fwrite(challenge_auth, 1, CHALLENGE_SIZE, fp);
     fclose(fp);
 #endif
 
@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
 #endif
 
     sign_pk(challenge_file, challenge_signed_file);
-   // auth_pk(challenge_file, challenge_signed_file);
+//    auth_pk(challenge_file, challenge_signed_file);
 
     return 0;
 }

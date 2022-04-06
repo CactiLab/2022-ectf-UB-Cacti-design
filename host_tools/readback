@@ -54,8 +54,8 @@ def readback(socket_number, region, num_bytes):
             challenge_receive = challenge_receive + sock.recv(1)
             cnt = cnt + 1
             
-        log.info("print out received challenge\r\n")
-        log.info(challenge_receive.hex())
+        # log.info("Print out received challenge\r\n")
+        # log.info(challenge_receive.hex())
 
         # save it to the challenge filestr
         challenge_file = open("/host_tools/rsa/challenge", "wb")
@@ -67,7 +67,7 @@ def readback(socket_number, region, num_bytes):
         sign_execute_command = '../host_tools/rsa/sign'
 
         if not os.system(sign_execute_command):
-            log.info("sign the challenge success")
+            log.info("Sign the challenge success")
         else:
             log.info("!!!!!!!!!!!!!sign the challenge failed!!!!!!!!!!!!!!!!!!!!!")
             return
@@ -85,12 +85,12 @@ def readback(socket_number, region, num_bytes):
         except IOError:
             log.info("Failed to open the singed challenge.")
 
-        try:
-            os.remove("/host_tools/rsa/challenge_signed")
-        # Raise error if the file is not there.
-        except IOError:
-            log.info("Fiailed to delete signed challenge file. ")
-            return
+        # try:
+        #     os.remove("/host_tools/rsa/challenge_signed")
+        # # Raise error if the file is not there.
+        # except IOError:
+        #     log.info("Fiailed to delete signed challenge file. ")
+        #     return
 
         if sock.recv(1) == b"S":
             log.info("Challenge authentication success.")

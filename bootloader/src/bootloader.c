@@ -33,6 +33,14 @@
 #include "aes.h"
 #endif
 
+#ifdef RSA_AUTH
+uint8_t challenge[CHALLENGE_SIZE] = {0};
+uint8_t challenge_signed[CHALLENGE_SIZE] = {0};
+uint8_t challenge_auth[CHALLENGE_SIZE] = {0};
+// read public key from eeprom
+rsa_pk host_pub;
+#endif
+
 // uint32_t stored_version = 0xFFFFFFFF;
 /**
  * @brief Boot the firmware.
@@ -120,30 +128,27 @@ void handle_boot(void)
         rel_msg++;
     }
     uart_writeb(HOST_UART, '\0');
-
+    SysTickDisable();
     // Execute the firmware
     void (*firmware)(void) = (void (*)(void))(FIRMWARE_BOOT_PTR + 1);
     firmware();
 }
 
 #ifdef RSA_AUTH
-void random_generate(uint32_t *challenge)
+void random_generate(uint8_t *challenge)
 {
     // char str[] = "0123456789abcdef";
     uint32_t seed = SysTickValueGet();
+    uint32_t tmp = 0;
     srand(seed);
-    for (uint32_t i = 0; i < CHALLENGE_SIZE/4; i++)
+    for (uint32_t i = 0; i < CHALLENGE_SIZE;)
     {
-        challenge[i] = rand();
-        // rand();
-        // memcpy(challenge[i], &time, sizeof(uint32_t));
-        // challenge[i] = '0' + rand() % 80;
-        // challenge[i] =  rand() % 80;
-        // challenge[i] = i;
+        tmp = rand();
+        challenge[i++] = *(((uint8_t *)&tmp)+0) % 26 + 0x61;
+        challenge[i++] = *(((uint8_t *)&tmp)+1) % 26 + 0x61;
+        challenge[i++] = *(((uint8_t *)&tmp)+2) % 26 + 0x61;
+        challenge[i++] = *(((uint8_t *)&tmp)+3) % 26 + 0x61;
     }
-    // SysTickDisable();
-    // SysTickPeriodSet(SYSTICK_HIGHEST_VALUE);
-    // SysTickEnable();
 }
 #endif
 
@@ -156,7 +161,7 @@ void handle_readback(void)
     uint8_t *address;
     uint32_t size = 0;
     uint32_t total_size;
-    //uint8_t readback_data[MAX_BLOCK_SIZE];
+    // uint8_t readback_data[MAX_BLOCK_SIZE];
     uint8_t *readback_data = (uint8_t *)DUMMY_PLAINTEXT;
 #ifdef MPU_ENABLED
     uint32_t mpu_change_ap_flag = 0;
@@ -166,15 +171,10 @@ void handle_readback(void)
     uart_writeb(HOST_UART, 'R');
 
 #ifdef RSA_AUTH
-    uint8_t challenge[CHALLENGE_SIZE] = {0};
-    uint8_t challenge_signed[CHALLENGE_SIZE] = {0};
-    uint8_t challenge_auth[CHALLENGE_SIZE] = {0};
-    // read public key from eeprom
-    rsa_pk host_pub;
     EEPROMRead(&host_pub, EEPROM_PUBLIC_KEY_ADDRESS, EEPROM_HOST_PUBKEY_SIZE);
     // add verification: send challenge
-    random_generate((uint32_t*)challenge);
-    // random_generate(challenge);
+    // random_generate((uint32_t *)challenge);
+    random_generate(challenge);
     // send the challenge
     uart_write(HOST_UART, challenge, CHALLENGE_SIZE);
 
@@ -263,7 +263,7 @@ void handle_readback(void)
         {
             if (!verify_saffire_cipher(block_size, &address[i * MAX_BLOCK_SIZE], readback_data, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc[i * TAG_SIZE]), (uint32_t)EEPROM_KEYC_ADDRESS))
                 return;
-        } 
+        }
         else if (region == 'F')
         {
             if (!verify_saffire_cipher(block_size, &address[i * MAX_BLOCK_SIZE], readback_data, &(boot_meta.IVf), &(boot_meta.tagf[i * TAG_SIZE]), (uint32_t)EEPROM_KEYF_ADDRESS))

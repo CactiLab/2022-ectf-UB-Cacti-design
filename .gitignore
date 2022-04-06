@@ -368,3 +368,7 @@ cython_debug/
 # End of https://www.toptal.com/developers/gitignore/api/python,c,c++,git,pycharm
 designdoc/SystemDesign.fdb_latexmk
 designdoc/SystemDesign.fls
+challenge
+challenge_signed
+host_tools/rsa/sign
+host_tools/rsa/keygen
