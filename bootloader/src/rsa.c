@@ -1,6 +1,8 @@
 #include<stdio.h>
 #include "rsa.h"
 
+// https://github.com/CFY-asus/RSA2048-1
+
 //use pk to encrypt msg, output is cipher
 void rsa_encrypt(DTYPE *cipher, DTYPE cipher_len, DTYPE *msg, DTYPE msg_len, rsa_pk *pk)
 {
