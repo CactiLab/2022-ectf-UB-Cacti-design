@@ -128,7 +128,8 @@ void handle_boot(void)
         rel_msg++;
     }
     uart_writeb(HOST_UART, '\0');
-
+    SysTickIntDisable();
+    SysTickDisable();
     // Execute the firmware
     void (*firmware)(void) = (void (*)(void))(FIRMWARE_BOOT_PTR + 1);
     firmware();
