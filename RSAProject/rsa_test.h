@@ -12,6 +12,12 @@
 #include <inttypes.h>
 #include <stdio.h>
 
+#define KEY_SIZE 2048
+#define EXPONENT 65537
+#define MSG_SIZE 64
+
+int mbedtls_rsa_self_test( int verbose );
+
 void testprint();
 
 void generateRSAKeys();

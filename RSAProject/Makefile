@@ -2,36 +2,39 @@ CC=gcc
 CFLAGS=-Wall
 TARGET=rsatest
 # OBJS=main.o rsa_test.o rsa.object
-
+# mbedtls/md_wrap.c		 
 SRCS = main.c	\
 	rsa_test.c	\
-	aes/aes.c	\
-	aes/aesni.c	\
-	aes/padlock.c	\
-	md5/md5.c	\
-	rsa/pk.c	\
-	rsa/pkparse.c	\
-	rsa/pk_wrap.c	\
-	rsa/asn1write.c	\
-	rsa/base64.c	\
-	rsa/cipher.c	\
-	rsa/cipher_wrap.c	\
-	rsa/des.c	\
-	rsa/pem.c	\
-	rsa/pkwrite.c	\
-	rsa/asn1parse.c	\
-	rsa/bignum.c	\
-	rsa/ctr_drbg.c	\
-	rsa/entropy.c	\
-	rsa/entropy_poll.c	\
-	rsa/md_wrap.c	\
-	rsa/md.c	\
-	rsa/oid.c	\
-	rsa/rsa.c	\
-	rsa/timing.c	\
-	sha/sha256.c
+	mbedtls/aes.c	\
+	mbedtls/aesni.c	\
+	mbedtls/padlock.c	\
+	mbedtls/md.c	\
+	mbedtls/md5.c	\
+	mbedtls/sha1.c	\
+	mbedtls/sha256.c	\
+	mbedtls/pk.c	\
+	mbedtls/pkparse.c	\
+	mbedtls/pk_wrap.c	\
+	mbedtls/asn1write.c	\
+	mbedtls/base64.c	\
+	mbedtls/cipher.c	\
+	mbedtls/cipher_wrap.c	\
+	mbedtls/des.c	\
+	mbedtls/pem.c	\
+	mbedtls/pkwrite.c	\
+	mbedtls/asn1parse.c	\
+	mbedtls/bignum.c	\
+	mbedtls/ctr_drbg.c	\
+	mbedtls/entropy.c	\
+	mbedtls/entropy_poll.c	\
+	mbedtls/oid.c	\
+	mbedtls/rsa.c	\
+	mbedtls/timing.c	\
+	mbedtls/platform_util.c	\
+	mbedtls/constant_time.c	\
+	mbedtls/rsa_alt_helpers.c
 
-INC+=-I./rsa -I./aes -I./sha -I./md5
+INC+=-I./mbedtls
 
 # SRCS := $(wildcard *.c)
 OBJS = $(SRCS:.c=.o)
@@ -56,4 +59,4 @@ clean:
 	rm -rf $(TARGET) $(OBJS)
 
 # INC=
-# gcc main.c rsa_test.c rsa/rsa.c -Irsa -Iaes -Imd5 -Isha
+# gcc main.c rsa_test.c mbedtls/rsa.c -Irsa -Iaes -Imd5 -Isha
