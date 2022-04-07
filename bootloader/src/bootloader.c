@@ -83,8 +83,6 @@ void handle_boot(void)
         return;
     }
    
-    EEPROMRead(&cfg_boot_meta, EEPROM_BOOT_CFG_META_DATA_ADDRESS, BOOT_CFG_META_SIZE);
-
     // write cfg data as plain text
     uint32_t blocks = (cfg_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
     uint32_t block_size;
@@ -107,7 +105,6 @@ void handle_boot(void)
     EEPROMProgram(&cfg_boot_meta.cyrpto_flag, EEPROM_BOOT_CFG_META_DATA_ADDRESS + 268, sizeof(uint32_t));
 
     memset(plaintext, 0, 4 * MAX_BLOCK_SIZE);
-    EEPROMRead(&boot_meta, EEPROM_BOOT_FW_META_DATA_ADDRESS, BOOT_FW_META_SIZE);
     // Copy the firmware into the Boot RAM section
     blocks = (fw_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
 
@@ -121,11 +118,11 @@ void handle_boot(void)
         {
             block_size = MAX_BLOCK_SIZE;
         }
-        verify_saffire_cipher(block_size, &FW_cipher[i * MAX_BLOCK_SIZE], plaintext, &(boot_meta.IVf), &(boot_meta.tagf[i * TAG_SIZE]), (uint32_t)EEPROM_KEYF_ADDRESS);
-        for (uint32_t j = 0; j < block_size; j++)
-        {
-            *((uint8_t *)(FIRMWARE_BOOT_PTR + (i * MAX_BLOCK_SIZE) + j)) = plaintext[j];
-        }
+        verify_saffire_cipher(block_size, &FW_cipher[i * MAX_BLOCK_SIZE], &plaintext[i * MAX_BLOCK_SIZE] , &(boot_meta.IVf), &(boot_meta.tagf[i * TAG_SIZE]), (uint32_t)EEPROM_KEYF_ADDRESS);
+        // for (uint32_t j = 0; j < block_size; j++)
+        // {
+        //     *((uint8_t *)(FIRMWARE_BOOT_PTR + (i * MAX_BLOCK_SIZE) + j)) = plaintext[j];
+        // }
     }
 
     uart_writeb(HOST_UART, 'M');
