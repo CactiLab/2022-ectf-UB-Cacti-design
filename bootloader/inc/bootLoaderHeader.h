@@ -74,7 +74,7 @@
 #define MAX_RELEASE_MESSAGE_SIZE 1025
 #define CHALLENGE_SIZE 64
 
-#define SYSTICK_HIGHEST_VALUE 16777216
+#define SYSTICK_HIGHEST_VALUE 0xFFFF
 typedef struct __attribute__((packed))
 {
   uint8_t FW_magic[FW_MAGIC_LEN]; // 2 bytes
@@ -116,14 +116,13 @@ void handle_boot(void);
 void handle_readback(void);
 void load_data_on_flash(uint8_t *source, uint32_t dst, uint32_t size);
 bool verify_saffire_cipher(uint32_t size, uint8_t *cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint32_t key_address);
-bool new_verify_saffire_cipher(uint32_t size, uint32_t cipher, uint8_t *plaintext, uint8_t *IV, uint8_t *tag, uint32_t key_address);
 void handle_FW_verification_response(protected_fw_format *fw_meta);
 bool check_FW_magic(protected_fw_format *fw_meta);
 bool check_CFG_magic(protected_cfg_format *cfg_meta);
 void handle_update(void);
 void handle_configure(void);
 void handle_CFG_verification_response(protected_cfg_format *cfg_meta);
-
+void cfg_initialize();
 void mpu_init();
 
 #endif
