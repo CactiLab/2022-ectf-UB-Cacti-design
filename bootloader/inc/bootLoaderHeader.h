@@ -74,7 +74,7 @@
 #define MAX_RELEASE_MESSAGE_SIZE 1025
 #define CHALLENGE_SIZE 64
 
-#define SYSTICK_HIGHEST_VALUE 0xFFFF
+#define SYSTICK_HIGHEST_VALUE 16777216
 typedef struct __attribute__((packed))
 {
   uint8_t FW_magic[FW_MAGIC_LEN]; // 2 bytes

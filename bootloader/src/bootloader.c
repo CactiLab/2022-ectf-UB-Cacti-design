@@ -663,10 +663,10 @@ int main(void)
 
     uint8_t cmd = 0;
 
-    // SysTickPeriodSet(SYSTICK_HIGHEST_VALUE);
+    SysTickPeriodSet(SYSTICK_HIGHEST_VALUE);
     // SysTickIntRegister(systick_handler);
     // SysTickIntEnable();
-    // SysTickEnable();
+    SysTickEnable();
     // Initialize IO components
     uart_init();
     SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
