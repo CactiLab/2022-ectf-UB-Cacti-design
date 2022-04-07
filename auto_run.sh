@@ -64,6 +64,13 @@ python3 tools/run_saffire.py cfg-load --emulated \
      --uart-sock $UART_SOCK \
      --protected-cfg-file example_cfg.prot
 
+python3 tools/run_saffire.py boot --emulated \
+    --sysname $SYS_NAME \
+    --uart-sock $UART_SOCK \
+    --boot-msg-file boot.txt
+
+python3 tools/emulator_reset.py --restart-sock socks/restart.sock
+
 # # 5. Readback
 python3 tools/run_saffire.py fw-readback --emualted \
      --sysname $SYS_NAME \
