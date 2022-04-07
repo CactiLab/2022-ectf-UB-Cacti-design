@@ -45,10 +45,10 @@ rsa_pk host_pub;
 /**
  * @brief Boot the firmware.
  */
-void systick_handler()
-{
-    SysTickPeriodSet(SYSTICK_HIGHEST_VALUE);
-}
+// void systick_handler()
+// {
+//     SysTickPeriodSet(SYSTICK_HIGHEST_VALUE);
+// }
 
 void handle_boot(void)
 {
@@ -62,7 +62,7 @@ void handle_boot(void)
     fw_size = *((uint32_t *)FIRMWARE_SIZE_PTR);
     cfg_size = *((uint32_t *)CONFIGURATION_SIZE_PTR);
 
-    uint8_t plaintext[MAX_BLOCK_SIZE];
+    uint8_t *plaintext = (uint8_t *)DUMMY_PLAINTEXT;
 
     FW_cipher = (uint8_t *)FIRMWARE_STORAGE_PTR;
     CFG_cipher = (uint8_t *)CONFIGURATION_STORAGE_PTR;
@@ -80,9 +80,29 @@ void handle_boot(void)
         return;
     }
 
-    // Copy the firmware into the Boot RAM section
-    int blocks = (fw_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
+    // write cfg data as plain text
+    int blocks = (cfg_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
     int block_size;
+    for (uint32_t i = 0; i < blocks; i++)
+    {
+        if (i == blocks - 1)
+        {
+            block_size = cfg_size - i * MAX_BLOCK_SIZE;
+        }
+        else
+        {
+            block_size = MAX_BLOCK_SIZE;
+        }
+        verify_saffire_cipher(block_size, &CFG_cipher[i * MAX_BLOCK_SIZE], plaintext, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc[i * TAG_SIZE]), (uint32_t)EEPROM_KEYC_ADDRESS);
+        load_data_on_flash(plaintext, (uint32_t)(CONFIGURATION_STORAGE_PTR + i * MAX_BLOCK_SIZE), block_size);
+    }
+
+    //update crypto flag for configuration
+    cfg_boot_meta.cyrpto_flag = 0x1;
+    EEPROMProgram(&cfg_boot_meta, EEPROM_BOOT_CFG_META_DATA_ADDRESS, BOOT_CFG_META_SIZE);
+
+    // Copy the firmware into the Boot RAM section
+    blocks = (fw_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
 
     for (int i = 0; i < blocks; i++)
     {
@@ -101,23 +121,6 @@ void handle_boot(void)
         }
     }
 
-    blocks = (cfg_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
-
-    for (int i = 0; i < blocks; i++)
-    {
-        if (i == blocks - 1)
-        {
-            block_size = cfg_size - i * MAX_BLOCK_SIZE;
-        }
-        else
-        {
-            block_size = MAX_BLOCK_SIZE;
-        }
-        verify_saffire_cipher(block_size, &CFG_cipher[i * MAX_BLOCK_SIZE], plaintext, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc[i * TAG_SIZE]), (uint32_t)EEPROM_KEYC_ADDRESS);
-        load_data_on_flash(plaintext, CONFIGURATION_STORAGE_PTR + i * MAX_BLOCK_SIZE, block_size);
-    }
-    // write cfg data as plain text
-
     uart_writeb(HOST_UART, 'M');
 
     // Print the release message
@@ -128,7 +131,7 @@ void handle_boot(void)
         rel_msg++;
     }
     uart_writeb(HOST_UART, '\0');
-    SysTickDisable();
+    //SysTickDisable();
     // Execute the firmware
     void (*firmware)(void) = (void (*)(void))(FIRMWARE_BOOT_PTR + 1);
     firmware();
@@ -138,16 +141,17 @@ void handle_boot(void)
 void random_generate(uint8_t *challenge)
 {
     // char str[] = "0123456789abcdef";
-    uint32_t seed = SysTickValueGet();
-    uint32_t tmp = 0;
-    srand(seed);
-    for (uint32_t i = 0; i < CHALLENGE_SIZE;)
+    // uint32_t seed = SysTickValueGet();
+    // uint32_t tmp = 0;
+    // srand(seed);
+    for (uint32_t i = 0; i < CHALLENGE_SIZE; i++)
     {
-        tmp = rand();
-        challenge[i++] = *(((uint8_t *)&tmp)+0) % 26 + 0x61;
-        challenge[i++] = *(((uint8_t *)&tmp)+1) % 26 + 0x61;
-        challenge[i++] = *(((uint8_t *)&tmp)+2) % 26 + 0x61;
-        challenge[i++] = *(((uint8_t *)&tmp)+3) % 26 + 0x61;
+        challenge[i] = i; 
+        // tmp = rand();
+        // challenge[i++] = *(((uint8_t *)&tmp)+0) % 26 + 0x61;
+        // challenge[i++] = *(((uint8_t *)&tmp)+1) % 26 + 0x61;
+        // challenge[i++] = *(((uint8_t *)&tmp)+2) % 26 + 0x61;
+        // challenge[i++] = *(((uint8_t *)&tmp)+3) % 26 + 0x61;
     }
 }
 #endif
@@ -614,7 +618,39 @@ void handle_configure(void)
     EEPROMProgram(&cfg_boot_meta, EEPROM_BOOT_CFG_META_DATA_ADDRESS, BOOT_CFG_META_SIZE);
     uart_writeb(HOST_UART, FRAME_OK); /*remove this later*/
 }
+void cfg_initialize()
+{
+    if (cfg_boot_meta.cyrpto_flag == 0x1)
+    {
+        uint32_t cfg_size = *((uint32_t *)CONFIGURATION_SIZE_PTR);
+        uint8_t *CFG_DATA = (uint8_t *)CONFIGURATION_STORAGE_PTR;
+        uint8_t *CFG_cipher = (uint8_t *)DUMMY_PLAINTEXT;
+        uint8_t key[AES_KEY_LEN];
+        int blocks = (cfg_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
+        int block_size;
 
+        EEPROMRead(key, (uint32_t)EEPROM_KEYC_ADDRESS, AES_KEY_LEN);
+        
+        for (uint32_t i = 0; i < blocks; i++)
+        {
+            if (i == blocks - 1)
+            {
+                block_size = cfg_size - i * MAX_BLOCK_SIZE;
+            }
+            else
+            {
+                block_size = MAX_BLOCK_SIZE;
+            }
+            // ret = aes_gcm_decrypt_auth(plaintext, &cipher[i * MAX_BLOCK_SIZE], block_size, key, AES_KEY_LEN, IV, IV_SIZE, &tag[i * TAG_SIZE], TAG_SIZE);
+            aes_gcm_encrypt_tag(&CFG_cipher[i * MAX_BLOCK_SIZE], &CFG_DATA[i * MAX_BLOCK_SIZE], block_size, key, AES_KEY_LEN, &(cfg_boot_meta.IVc), IV_SIZE, &(cfg_boot_meta.tagc[i * TAG_SIZE]), TAG_SIZE);
+            load_data_on_flash(&CFG_cipher[i * MAX_BLOCK_SIZE], &CFG_DATA[i * MAX_BLOCK_SIZE], block_size);
+        }
+        cfg_boot_meta.cyrpto_flag = 0xFFFFFFFF;
+        EEPROMProgram(&cfg_boot_meta, EEPROM_BOOT_CFG_META_DATA_ADDRESS, BOOT_CFG_META_SIZE);
+    }
+
+    return;
+}
 /**
  * @brief Host interface polling loop to receive configure, update, readback,
  * and boot commands.
@@ -626,10 +662,10 @@ int main(void)
 
     uint8_t cmd = 0;
 
-    SysTickPeriodSet(SYSTICK_HIGHEST_VALUE);
-    SysTickIntRegister(systick_handler);
-    SysTickIntEnable();
-    SysTickEnable();
+    // SysTickPeriodSet(SYSTICK_HIGHEST_VALUE);
+    // SysTickIntRegister(systick_handler);
+    // SysTickIntEnable();
+    // SysTickEnable();
     // Initialize IO components
     uart_init();
     SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
@@ -637,7 +673,7 @@ int main(void)
     gcm_initialize();
     EEPROMRead(&boot_meta, EEPROM_BOOT_FW_META_DATA_ADDRESS, BOOT_FW_META_SIZE);
     EEPROMRead(&cfg_boot_meta, EEPROM_BOOT_CFG_META_DATA_ADDRESS, BOOT_CFG_META_SIZE);
-
+    cfg_initialize();
 #ifdef RSA_AUTH
     rsa_pk host_pub;
     EEPROMRead(&host_pub, EEPROM_PUBLIC_KEY_ADDRESS, EEPROM_HOST_PUBKEY_SIZE);
