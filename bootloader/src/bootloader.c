@@ -20,14 +20,9 @@
 #include "flash.h"
 #include "uart.h"
 #include "aes-gcm.h"
-
-// #include "bn.h"
-// #include "keys.h"
 #include "rsa.h"
-// #include "../lib/auth/md5.h"
 
 #include "bootLoaderHeader.h"
-// #include "rsa_key.h"
 // this will run if EXAMPLE_AES is defined in the Makefile (see line 54)
 #ifdef EXAMPLE_AES
 #include "aes.h"
@@ -41,7 +36,6 @@ uint8_t challenge_auth[CHALLENGE_SIZE] = {0};
 rsa_pk host_pub;
 #endif
 
-// uint32_t stored_version = 0xFFFFFFFF;
 /**
  * @brief Boot the firmware.
  */
@@ -52,40 +46,41 @@ rsa_pk host_pub;
 
 void handle_boot(void)
 {
-    uint32_t fw_size, cfg_size;
+    uint32_t fw_size = 0, cfg_size = 0, blocks = 0, block_size = 0;
     uint32_t i = 0;
     uint8_t *rel_msg;
     uint8_t *FW_cipher;
     uint8_t *CFG_cipher;
     int ret = 0;
 
-    fw_size = *((uint32_t *)FIRMWARE_SIZE_PTR);
-    cfg_size = *((uint32_t *)CONFIGURATION_SIZE_PTR);
-
     uint8_t *plaintext = (uint8_t *)DUMMY_PLAINTEXT;
 
-    FW_cipher = (uint8_t *)FIRMWARE_STORAGE_PTR;
-    CFG_cipher = (uint8_t *)CONFIGURATION_STORAGE_PTR;
     // Acknowledge the host
     uart_writeb(HOST_UART, 'B');
 
-    EEPROMRead(&boot_meta, EEPROM_BOOT_FW_META_DATA_ADDRESS, BOOT_FW_META_SIZE);
+    // handle configuration data verification
+    cfg_size = *((uint32_t *)CONFIGURATION_SIZE_PTR);
+    CFG_cipher = (uint8_t *)CONFIGURATION_STORAGE_PTR;
     EEPROMRead(&cfg_boot_meta, EEPROM_BOOT_CFG_META_DATA_ADDRESS, BOOT_CFG_META_SIZE);
-
-    if (!verify_saffire_cipher(fw_size, FW_cipher, plaintext, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
-    {
-        uart_writeb(HOST_UART, 'X');
-        return;
-    }
     if (!verify_saffire_cipher(cfg_size, CFG_cipher, plaintext, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
     {
         uart_writeb(HOST_UART, 'Y');
         return;
     }
-   
+
+    // handle firmware data verification
+    fw_size = *((uint32_t *)FIRMWARE_SIZE_PTR);
+    FW_cipher = (uint8_t *)FIRMWARE_STORAGE_PTR;
+    EEPROMRead(&boot_meta, EEPROM_BOOT_FW_META_DATA_ADDRESS, BOOT_FW_META_SIZE);
+    if (!verify_saffire_cipher(fw_size, FW_cipher, plaintext, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
+    {
+        uart_writeb(HOST_UART, 'X');
+        return;
+    }
+
     // write cfg data as plain text
-    uint32_t blocks = (cfg_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
-    uint32_t block_size;
+    memset(plaintext, 0, MAX_BLOCK_SIZE);
+    blocks = (cfg_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
     for (uint32_t i = 0; i < blocks; i++)
     {
         if (i == blocks - 1)
@@ -99,15 +94,13 @@ void handle_boot(void)
         verify_saffire_cipher(block_size, &CFG_cipher[i * MAX_BLOCK_SIZE], plaintext, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc[i * TAG_SIZE]), (uint32_t)EEPROM_KEYC_ADDRESS);
         load_data_on_flash(plaintext, (uint32_t)(CONFIGURATION_STORAGE_PTR + i * MAX_BLOCK_SIZE), block_size);
     }
-
-    //update crypto flag for configuration
+    // update crypto flag for configuration
     cfg_boot_meta.cyrpto_flag = 0x1;
     EEPROMProgram(&cfg_boot_meta.cyrpto_flag, EEPROM_BOOT_CFG_META_DATA_ADDRESS + 268, sizeof(uint32_t));
 
-    memset(plaintext, 0, 4 * MAX_BLOCK_SIZE);
-    // Copy the firmware into the Boot RAM section
+    // get plaintext of the firmware
+    memset(plaintext, 0, MAX_BLOCK_SIZE * 4);
     blocks = (fw_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
-
     for (uint32_t i = 0; i < blocks; i++)
     {
         if (i == blocks - 1)
@@ -118,11 +111,7 @@ void handle_boot(void)
         {
             block_size = MAX_BLOCK_SIZE;
         }
-        verify_saffire_cipher(block_size, &FW_cipher[i * MAX_BLOCK_SIZE], &plaintext[i * MAX_BLOCK_SIZE] , &(boot_meta.IVf), &(boot_meta.tagf[i * TAG_SIZE]), (uint32_t)EEPROM_KEYF_ADDRESS);
-        // for (uint32_t j = 0; j < block_size; j++)
-        // {
-        //     *((uint8_t *)(FIRMWARE_BOOT_PTR + (i * MAX_BLOCK_SIZE) + j)) = plaintext[j];
-        // }
+        verify_saffire_cipher(block_size, &FW_cipher[i * MAX_BLOCK_SIZE], &plaintext[i * MAX_BLOCK_SIZE], &(boot_meta.IVf), &(boot_meta.tagf[i * TAG_SIZE]), (uint32_t)EEPROM_KEYF_ADDRESS);
     }
 
     uart_writeb(HOST_UART, 'M');
@@ -135,8 +124,8 @@ void handle_boot(void)
         rel_msg++;
     }
     uart_writeb(HOST_UART, '\0');
-    //SysTickDisable();
-    // Execute the firmware
+    // SysTickDisable();
+    //  Execute the firmware
     void (*firmware)(void) = (void (*)(void))(FIRMWARE_BOOT_PTR + 1);
     firmware();
 }
@@ -144,18 +133,17 @@ void handle_boot(void)
 #ifdef RSA_AUTH
 void random_generate(uint8_t *challenge)
 {
-    // char str[] = "0123456789abcdef";
     // uint32_t seed = SysTickValueGet();
     // uint32_t tmp = 0;
     // srand(seed);
     for (uint32_t i = 0; i < CHALLENGE_SIZE; i++)
     {
-        challenge[i] = i; 
+        challenge[i] = i;
         // tmp = rand();
-        // challenge[i++] = *(((uint8_t *)&tmp)+0) % 26 + 0x61;
-        // challenge[i++] = *(((uint8_t *)&tmp)+1) % 26 + 0x61;
-        // challenge[i++] = *(((uint8_t *)&tmp)+2) % 26 + 0x61;
-        // challenge[i++] = *(((uint8_t *)&tmp)+3) % 26 + 0x61;
+        // challenge[i++] = *(((uint8_t *)&tmp)+0);
+        // challenge[i++] = *(((uint8_t *)&tmp)+1);
+        // challenge[i++] = *(((uint8_t *)&tmp)+2);
+        // challenge[i++] = *(((uint8_t *)&tmp)+3);
     }
 }
 #endif
@@ -169,8 +157,8 @@ void handle_readback(void)
     uint8_t *address;
     uint32_t size = 0;
     uint32_t total_size;
-    // uint8_t readback_data[MAX_BLOCK_SIZE];
     uint8_t *readback_data = (uint8_t *)DUMMY_PLAINTEXT;
+    memset(readback_data, 0, MAX_BLOCK_SIZE * 4);
 #ifdef MPU_ENABLED
     uint32_t mpu_change_ap_flag = 0;
 #endif
@@ -181,7 +169,6 @@ void handle_readback(void)
 #ifdef RSA_AUTH
     EEPROMRead(&host_pub, EEPROM_PUBLIC_KEY_ADDRESS, EEPROM_HOST_PUBKEY_SIZE);
     // add verification: send challenge
-    // random_generate((uint32_t *)challenge);
     random_generate(challenge);
     // send the challenge
     uart_write(HOST_UART, challenge, CHALLENGE_SIZE);
@@ -211,11 +198,6 @@ void handle_readback(void)
         // Set the base address for the readback
         address = (uint8_t *)FIRMWARE_STORAGE_PTR;
         total_size = *((uint32_t *)FIRMWARE_SIZE_PTR);
-        // if (!verify_saffire_cipher(total_size, address, readback_data, &(boot_meta.IVf), &(boot_meta.tagf), (uint32_t)EEPROM_KEYF_ADDRESS))
-        // {
-        //     uart_writeb(HOST_UART, 'X');
-        //     return;
-        // }
         // Acknowledge the host
         uart_writeb(HOST_UART, 'F');
     }
@@ -228,11 +210,6 @@ void handle_readback(void)
         // Set the base address for the readback
         address = (uint8_t *)CONFIGURATION_STORAGE_PTR;
         total_size = *((uint32_t *)CONFIGURATION_SIZE_PTR);
-        // if (!verify_saffire_cipher(total_size, address, readback_data, &(cfg_boot_meta.IVc), &(cfg_boot_meta.tagc), (uint32_t)EEPROM_KEYC_ADDRESS))
-        // {
-        //     uart_writeb(HOST_UART, 'Y');
-        //     return;
-        // }
         // Acknowledge the hose
         uart_writeb(HOST_UART, 'C');
     }
@@ -255,7 +232,10 @@ void handle_readback(void)
 
     uint32_t readback_blocks = (size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
     uint32_t total_blocks = (total_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
-    uint32_t block_size;
+    uint32_t block_size = 0;
+
+    EEPROMRead(&boot_meta, EEPROM_BOOT_FW_META_DATA_ADDRESS, BOOT_FW_META_SIZE);
+    EEPROMRead(&cfg_boot_meta, EEPROM_BOOT_CFG_META_DATA_ADDRESS, BOOT_CFG_META_SIZE);
 
     for (uint32_t i = 0; i < total_blocks && i < readback_blocks; i++)
     {
@@ -362,6 +342,7 @@ void handle_CFG_verification_response(protected_cfg_format *cfg_meta)
     uint32_t c_size = cfg_meta->CFG_size;
     uint32_t dst = CONFIGURATION_STORAGE_PTR;
     uint8_t *cfg_plaintext = (uint8_t *)DUMMY_PLAINTEXT;
+    memset(cfg_plaintext, 0, MAX_BLOCK_SIZE * 4);
     // uint8_t cfg_cipher[MAX_BLOCK_SIZE];
     uint8_t page_buffer[FLASH_PAGE_SIZE] = {0};
 
@@ -414,6 +395,7 @@ void handle_FW_verification_response(protected_fw_format *fw_meta)
     uint32_t f_size = fw_meta->FW_size;
     uint32_t dst = FIRMWARE_STORAGE_PTR;
     uint8_t *fw_plaintext = (uint8_t *)DUMMY_PLAINTEXT;
+    memset(fw_plaintext, 0, MAX_BLOCK_SIZE * 4);
     // uint8_t FW_cipher[f_size];
     uint8_t page_buffer[FLASH_PAGE_SIZE] = {0};
 
@@ -506,10 +488,8 @@ void handle_update(void)
     uart_writeb(HOST_UART, FRAME_OK);
 
     // Check the version
-    // fw_meta.version_number = (uint32_t *)output[0];
     memcpy((uint32_t)&fw_meta.version_number, output, sizeof(int));
     current_version = *((uint32_t *)FIRMWARE_VERSION_PTR);
-    // current_version = stored_version;
     if (current_version == 0xFFFFFFFF)
     {
         current_version = (uint32_t)OLDEST_VERSION;
@@ -613,28 +593,28 @@ void handle_configure(void)
     flash_erase_page(CONFIGURATION_METADATA_PTR);
     flash_write_word(cfg_meta.CFG_size, CONFIGURATION_SIZE_PTR);
 
-    // uart_writeb(HOST_UART, FRAME_OK);
-
     // Retrieve configuration
     handle_CFG_verification_response(&cfg_meta);
     memcpy(&cfg_boot_meta.IVc, &cfg_meta.IVc, IV_SIZE);
     memcpy(&cfg_boot_meta.tagc, &cfg_meta.tagc, TAG_SIZE * MAX_CFG_TAG_NUM);
+    cfg_boot_meta.cyrpto_flag = 0xFFFFFFFF;
     EEPROMProgram(&cfg_boot_meta, EEPROM_BOOT_CFG_META_DATA_ADDRESS, BOOT_CFG_META_SIZE);
     uart_writeb(HOST_UART, FRAME_OK); /*remove this later*/
 }
 void cfg_initialize()
 {
+    EEPROMRead(&cfg_boot_meta.cyrpto_flag, EEPROM_BOOT_CFG_META_DATA_ADDRESS + 268, BOOT_CFG_META_SIZE);
     if (cfg_boot_meta.cyrpto_flag == 0x1)
     {
         uint32_t cfg_size = *((uint32_t *)CONFIGURATION_SIZE_PTR);
         uint8_t *CFG_DATA = (uint8_t *)CONFIGURATION_STORAGE_PTR;
         uint8_t *CFG_cipher = (uint8_t *)DUMMY_PLAINTEXT;
-        uint8_t key[AES_KEY_LEN];
-        int blocks = (cfg_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
-        int block_size;
+        uint8_t key[AES_KEY_LEN] = {0};
+        uint32_t blocks = (cfg_size + (MAX_BLOCK_SIZE - 1)) / MAX_BLOCK_SIZE;
+        uint32_t block_size = 0;
 
         EEPROMRead(key, (uint32_t)EEPROM_KEYC_ADDRESS, AES_KEY_LEN);
-        
+
         for (uint32_t i = 0; i < blocks; i++)
         {
             if (i == blocks - 1)
@@ -675,13 +655,7 @@ int main(void)
     SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
     uint8_t inItRet = EEPROMInit();
     gcm_initialize();
-    EEPROMRead(&boot_meta, EEPROM_BOOT_FW_META_DATA_ADDRESS, BOOT_FW_META_SIZE);
-    EEPROMRead(&cfg_boot_meta, EEPROM_BOOT_CFG_META_DATA_ADDRESS, BOOT_CFG_META_SIZE);
     cfg_initialize();
-#ifdef RSA_AUTH
-    rsa_pk host_pub;
-    EEPROMRead(&host_pub, EEPROM_PUBLIC_KEY_ADDRESS, EEPROM_HOST_PUBKEY_SIZE);
-#endif
 
 #ifdef MPU_ENABLED
     mpu_init();
