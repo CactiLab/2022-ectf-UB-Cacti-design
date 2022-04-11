@@ -34,7 +34,7 @@ int sign_pk(char *challenge_file, char *challenge_signed_file)
 #ifdef TEST
     char *host_pri_file = "host_privateKey";
 #else
-    char *host_pri_file = "/host_tools/rsa/host_privateKey";
+    char *host_pri_file = "/secrets/host_privateKey";
 #endif
 
     uint8_t challenge_signed[CHALLENGE_SIZE] = {0};

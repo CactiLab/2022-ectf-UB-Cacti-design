@@ -41,6 +41,7 @@ WORKDIR /host_tools/rsa
 RUN make
 WORKDIR /
 RUN python3 /host_tools/generate_secrets
+RUN mv /host_tools/rsa/host_privateKey /secrets/host_privateKey
 # Create EEPROM contents
 RUN mv /secrets/eeprom.bin /bootloader/eeprom.bin
 # Compile bootloader
