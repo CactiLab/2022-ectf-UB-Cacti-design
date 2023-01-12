@@ -1,0 +1,92 @@
+python3 tools/run_saffire.py build-system --emulated \
+    --sysname saffire-test-zheyuan \
+    --oldest-allowed-version 1
+
+alias build-system="python3 tools/run_saffire.py build-system --emulated --sysname saffire-test-zheyuan --oldest-allowed-version 1"
+
+python3 tools/run_saffire.py load-device --emulated --sysname saffire-test-zheyuan
+
+alias load-device="python3 tools/run_saffire.py load-device --emulated --sysname saffire-test-zheyuan"
+
+mkdir socks
+python3 tools/run_saffire.py launch-bootloader-gdb --emulated  \
+    --sysname saffire-test-zheyuan \
+    --sock-root socks/ \
+    --uart-sock 3471
+
+alias launch-bl-gdb="mkdir socks && python3 tools/run_saffire.py launch-bootloader-gdb --emulated --sysname saffire-test-zheyuan --sock-root socks/ --uart-sock 3471"
+
+alias gdb-bl="gdb-multiarch saffire-test-zheyuan-bootloader.elf.deleteme -ex 'target remote /home/team/zheyuan/2022-ectf-UB-Cacti-design/socks/gdb.sock'"
+
+
+python3 tools/run_saffire.py fw-protect \
+    --sysname saffire-test-zheyuan \
+    --fw-root firmware/ \
+    --raw-fw-file example_fw.bin \
+    --protected-fw-file example_fw.prot \
+    --fw-version 2 \
+    --fw-message 'hello world'
+------------------------------------------
+alias fw-protect="python3 tools/run_saffire.py fw-protect --sysname saffire-test-zheyuan --fw-root firmware/ --raw-fw-file example_fw.bin --protected-fw-file example_fw.prot --fw-version 2 --fw-message 'hello world'"
+------------------------------------------
+python3 tools/run_saffire.py cfg-protect \
+    --sysname saffire-test-zheyuan \
+    --cfg-root configuration/ \
+    --raw-cfg-file example_cfg.bin \
+    --protected-cfg-file example_cfg.prot
+
+=========
+alias cfg-protect="python3 tools/run_saffire.py cfg-protect --sysname saffire-test-zheyuan --cfg-root configuration/ --raw-cfg-file example_cfg.bin --protected-cfg-file example_cfg.prot"
+=========
+
+python3 tools/run_saffire.py fw-update \
+    --sysname saffire-test-zheyuan \
+    --fw-root firmware/ \
+    --uart-sock 3471 \
+    --protected-fw-file example_fw.prot
+------------------------------------------
+alias fw-update="python3 tools/run_saffire.py fw-update --sysname saffire-test-zheyuan --fw-root firmware/ --uart-sock 3471 --protected-fw-file example_fw.prot"
+------------------------------------------
+python3 tools/run_saffire.py cfg-load \
+    --sysname saffire-test-zheyuan \
+    --cfg-root configuration/ \
+    --uart-sock 3471 \
+    --protected-cfg-file example_cfg.prot
+
+=========
+alias cfg-load="python3 tools/run_saffire.py cfg-load --sysname saffire-test-zheyuan --cfg-root configuration/     --uart-sock 3471 --protected-cfg-file example_cfg.prot"
+=========
+
+python3 tools/run_saffire.py fw-readback \
+    --sysname saffire-test-zheyuan \
+    --uart-sock 3471 \
+    --rb-len 100
+------------------------------------------
+alias fw-readback="python3 tools/run_saffire.py fw-readback --sysname saffire-test-zheyuan --uart-sock 3471 --rb-len 100"
+build-system && load-device && launch-bl-gdb && gdb-bl
+fw-protect && fw-update && fw-readback
+
+------------------------------------------
+python3 tools/run_saffire.py cfg-readback \
+    --sysname saffire-test-zheyuan \
+    --uart-sock 3471 \
+    --rb-len 100
+=========
+alias cfg-readback="python3 tools/run_saffire.py cfg-readback --sysname saffire-test-zheyuan --uart-sock 3471 --rb-len 100"
+=========
+
+python3 tools/run_saffire.py boot \
+    --sysname saffire-test-zheyuan \
+    --uart-sock 3471 \
+    --boot-msg-file boot.txt
+python3 tools/run_saffire.py monitor \
+    --sysname saffire-test-zheyuan \
+    --uart-sock 3471 \
+    --boot-msg-file boot.txt
+
+python3 tools/emulator_reset.py --restart-sock socks/restart.sock
+python3 tools/run_saffire.py kill-system --emulated --sysname saffire-test-zheyuan
+
+alias kl="python3 tools/run_saffire.py kill-system --emulated --sysname saffire-test-zheyuan && rm -r socks/"
+
+dd if=/dev/urandom of=example_fw.bin bs=4096 count=1
